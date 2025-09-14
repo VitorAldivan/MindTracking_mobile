@@ -6,7 +6,7 @@ export default function BirthDateInput() {
   const [birthDate, setBirthDate] = useState("");
 
   const formatDate = (value: string) => {
-    const digits = value.replace(/\D/g, ""); // só números
+    const digits = value.replace(/\D/g, ""); 
     let formatted = digits;
 
     if (digits.length > 2 && digits.length <= 4) {
@@ -25,7 +25,7 @@ export default function BirthDateInput() {
     const today = new Date();
     const birth = new Date(year, month - 1, day);
 
-    // diferença em anos
+    
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
@@ -55,7 +55,7 @@ export default function BirthDateInput() {
       value={birthDate}
       onChangeText={handleChange}
       onBlur={handleBlur}
-      maxLength={10} // formato fixo DD/MM/AAAA
+      maxLength={10} 
       iconLeft="user"
     />
   );

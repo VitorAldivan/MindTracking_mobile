@@ -1,18 +1,27 @@
 import { View, TextInput, TextInputProps } from "react-native";
-import UserIcon from "../../../assets/icons/usuario.svg";
-import LockIcon from "../../../assets/icons/senha.svg";
+import EmailIcon from "../../../../assets/icons/email.svg";
+import SenhaIcon from "../../../../assets/icons/senha.svg";
+import UserIcon from "../../../../assets/icons/usuario.svg";
+import PhoneIcon from "../../../../assets/icons/telefone.svg";
+import GeneroIcon from "../../../../assets/icons/genero.svg";
 
 interface InputBaseProps extends TextInputProps {
-  iconLeft?: "user" | "lock"; // só aceita esses valores
+  iconLeft?: "email" | "senha" | "user" | "genero" | "telefone"; 
 }
 
 export default function InputBase({ iconLeft, placeholder, ...rest }: InputBaseProps) {
   const renderIcon = () => {
     switch (iconLeft) {
+      case "email":
+        return <EmailIcon width={20} height={20} />;
+        case "telefone":
+        return <PhoneIcon width={20} height={20} />;
       case "user":
         return <UserIcon width={20} height={20} />;
-      case "lock":
-        return <LockIcon width={20} height={20} />;
+      case "genero":
+        return <GeneroIcon width={20} height={20} />;
+      case "senha":
+        return <SenhaIcon width={20} height={20} />;
       default:
         return null;
     }

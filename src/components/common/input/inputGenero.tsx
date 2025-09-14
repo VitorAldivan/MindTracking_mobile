@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View, TouchableOpacity, FlatList, Text } from "react-native";
 import InputBase from "./inputBase";
-import ArrowDown from "../../../../assets/icons/seta.svg"; // única seta
+import ArrowDown from "../../../../assets/icons/seta.svg"; 
 
 const GENDERS = ["Masculino", "Feminino", "Outro"];
 
@@ -20,7 +20,7 @@ export default function InputGender() {
 
   return (
     <View className="w-full max-w-[342px]">
-      {/* Campo base com seta */}
+      
       <TouchableOpacity onPress={toggleDropdown} activeOpacity={0.8}>
         <InputBase
           placeholder="Selecione o gênero"
@@ -29,7 +29,7 @@ export default function InputGender() {
           iconLeft="genero"
         />
         <View className="absolute right-3 top-1/2 -translate-y-1/2">
-          {/* Aplica rotação na seta baseado no estado 'open' */}
+          
           <ArrowDown 
             width={20} 
             height={20} 
@@ -40,7 +40,7 @@ export default function InputGender() {
         </View>
       </TouchableOpacity>
 
-      {/* Dropdown */}
+      
       {open && (
         <View className="bg-gray-700 rounded-md mt-1 border border-blue-600">
           <FlatList

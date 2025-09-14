@@ -5,10 +5,10 @@ export default function PhoneInput() {
   const [phone, setPhone] = useState("");
 
   const formatPhone = (value: string) => {
-    // remove tudo que não for número
+    
     const digits = value.replace(/\D/g, "");
 
-    // aplica a máscara (11) 22222-2222
+    
     if (digits.length <= 2) {
       return `(${digits}`;
     } else if (digits.length <= 7) {
@@ -21,7 +21,7 @@ export default function PhoneInput() {
   };
 
   const handleChange = (text: string) => {
-    // impede emojis, só deixa números e espaços/dash/parênteses
+   
     const cleaned = text.replace(/[^\d\s()-]/g, "");
     setPhone(formatPhone(cleaned));
   };
@@ -33,7 +33,7 @@ export default function PhoneInput() {
       value={phone}
       onChangeText={handleChange}
       iconLeft="user"
-      maxLength={15} // limite pra máscara
+      maxLength={15} 
     />
   );
 }

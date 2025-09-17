@@ -1,17 +1,13 @@
 import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions } from "react-native";
 import InputBase from "../components/common/input/inputBase";
-import BirthDateInput from "../components/common/input/inputData";
-import InputGender from "../components/common/input/inputGenero";
-import PhoneInput from "../components/common/input/inputPhone";
 import ButtonBase from "../components/common/button/button";
-
-
+import ButtonBase2 from "../components/common/button/button2";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 
 const { width, height } = Dimensions.get("window");
 
-export default function RegisterScreen2() {
+export default function PreLogin() {
   const router = useRouter();
 
   // estados da senha
@@ -29,7 +25,7 @@ export default function RegisterScreen2() {
       return;
     }
     setError("");
-    
+   
     router.push("/auth/registro1");
   };
 
@@ -43,35 +39,29 @@ export default function RegisterScreen2() {
         />
 
         <View style={styles.titulos}>
-          <Text style={styles.title}>Estamos quase lá</Text>
+          <Text style={styles.title}>MindTracking</Text>
           <Text style={styles.subtitle}>
-            Para uma experiência mais pessoal, precisamos de alguns detalhes. Como podemos te chamar?
+            Bem-estar começa com um passo. {'\n'}                
+              Dê o primeiro hoje!  
           </Text>
         </View>
       </View>
 
-      <View style={styles.inputs}>
-        <InputBase
-          placeholder="Digite seu nome"
-          iconLeft="user"
-        />
-
-        <BirthDateInput />
-        <PhoneInput />
-        <InputGender />
-
-
-       
-
-       
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      </View>
+      
 
       <View style={styles.botoes}>
-        <ButtonBase title="Próxima etapa" onPress={() => router.push("/auth/confirm-code")} />
+        <ButtonBase title="Começar agora" onPress={() => router.push("/auth/registro1")} />
 
-     
-       
+        <View style={styles.divider}>
+          <View style={styles.line} />
+          <Text style={styles.orText}>Ou</Text>
+          <View style={styles.line} />
+        </View>
+
+        <ButtonBase2
+          title="Já tenho uma conta"
+          onPress={() => router.push("/auth/login")}
+        />
       </View>
     </View>
   );
@@ -86,8 +76,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   logo: {
-    width: width * 0.22,
-    height: height * 0.08,
+    width: width * 0.42,
+    height: height * 0.1,
+    marginBottom: height * -0.03,
   },
   inputs: {
     justifyContent: "flex-start",
@@ -98,13 +89,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   titulos: {
-    gap: height * 0.008,
+    gap: height * 0.02,
+    marginBottom: height * 0.05
   },
   botoes: {
-    marginBottom: height * 0.01,
+    marginBottom: height * -0.09,
     gap: height * 0.001,
     paddingTop: 15,
   },
+  
   title: {
     fontSize: width * 0.08,
     fontWeight: "600",
@@ -112,12 +105,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontFamily: "Inter_500Medium",
   },
+  
   subtitle: {
     fontSize: width * 0.04,
     color: "#ffffffff",
     textAlign: "center",
     marginBottom: height * 0.03,
     fontFamily: "Inter_600SemiBold",
+    gap: height * 1,
+    lineHeight: height * 0.04,
   },
   errorText: {
     color: "red",

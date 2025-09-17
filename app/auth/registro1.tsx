@@ -7,7 +7,7 @@ import { useState } from "react";
 
 const { width, height } = Dimensions.get("window");
 
-export default function LoginScreen() {
+export default function RegisterScreen1() {
   const router = useRouter();
 
   // estados da senha

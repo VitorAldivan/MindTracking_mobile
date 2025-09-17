@@ -81,6 +81,7 @@ export default function InputBase({
 
 const styles = StyleSheet.create({
   container: {
+    
     width: "100%",
     height: 48,
     flexDirection: "row",

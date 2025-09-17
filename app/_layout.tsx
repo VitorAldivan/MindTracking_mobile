@@ -32,6 +32,8 @@ export default function RootLayout() {
         headerTitleStyle: { fontFamily: "Inter_500Medium" },
       }}
     >
+      <Stack.Screen name="auth/carrosel" />
+      <Stack.Screen name="auth/pre-login" />
       <Stack.Screen name="auth/login" />
       <Stack.Screen name="auth/registro1" />
       <Stack.Screen name="auth/registro2" />

@@ -1,0 +1,11 @@
+Carrosséis - fazer uma animação suave para crescer activedot.
+	   - componentizar o botão do carrossel 3.
+	   - Verificar as fontes do carrossel de acordo com o figma.
+
+AUTH
+Registro 1 - trocar a ordem do olho a abrir a tela
+Registro 2 - arrumar os ícones de telefone, seguindo padrão do figma.
+ 	   - dropdown não pode empurrar a tela, ele tem que se sobrepor
+Login - arrumar ícone do eyes.
+
+Senha - 8 caracteres - 1 letra minúscula, 1 letra maiúscula, 1 numero, 1 caractere especial/ não pode emoji

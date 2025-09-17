@@ -1,9 +1,9 @@
-import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions } from "react-native";
-import InputBase from "../components/common/input/inputBase";
-import ButtonBase from "../components/common/button/button";
-import ButtonBase2 from "../components/common/button/button2";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { Dimensions, Image, StyleSheet, Text, View } from "react-native";
+import ButtonBase from "../components/common/button/button";
+import ButtonBase2 from "../components/common/button/button2";
+import InputBase from "../components/common/input/inputBase";
 
 const { width, height } = Dimensions.get("window");
 

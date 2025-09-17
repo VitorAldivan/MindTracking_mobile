@@ -1,8 +1,7 @@
-import React, { useRef } from "react";
-import { View, Text, Image, StyleSheet, TouchableOpacity, Animated, Dimensions } from "react-native";
-import Swiper from "react-native-swiper";
 import { useRouter } from "expo-router";
-import { Background } from "@react-navigation/elements";
+import React, { useRef } from "react";
+import { Animated, Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Swiper from "react-native-swiper";
 
 const { width, height } = Dimensions.get("window");
 
@@ -136,14 +135,15 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: width * 0.06,
-    fontWeight: "bold",
+    fontFamily: "Inter_600SemiBold",
     color: "#FFFFFF",
     textAlign: "center",
     marginBottom: height * 0.015,
   },
 
   text: {
-    fontSize: width * 0.045,
+    fontSize: width * 0.05,
+    fontFamily: "Inter_600SemiBold",
     color: "#B3B3B3",
     textAlign: "center",
     paddingHorizontal: width * 0.05,

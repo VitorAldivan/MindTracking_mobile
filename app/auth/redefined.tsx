@@ -13,43 +13,27 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.topo}>
-        <Image
-          source={require("../../assets/icons/logo.png")} 
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        
 
         <View style={styles.titulos}>
-          <Text style={styles.title}>Bem-vindo de volta!</Text>
-          <Text style={styles.subtitle}>Mantenha sua mente nos conformes</Text>
+          <Text style={styles.title}>Redefinir sua senha</Text>
+          <Text style={styles.subtitle}>Por favor, digite seu email atual para continuar</Text>
         </View>
       </View>
 
-      <InputBase placeholder="Digite seu email" iconLeft="email" />
-      <InputBase iconLeft="senha" placeholder="Senha" 
+      
+      <InputBase iconLeft="email" placeholder="Email" 
       eyeOpenIcon={require("@assets/icons/eye.png")}
       eyeClosedIcon={require("@assets/icons/eye-off.png")}/>
 
       
-      <TouchableOpacity onPress={() => router.push("/auth/redefined")}>
-        <Text style={styles.forgotText}>Esqueceu sua senha?</Text>
-      </TouchableOpacity>
-
+   
       <View style={styles.botoes}>
-        <ButtonBase title="Fazer login" onPress={() => {}} />
+        <ButtonBase title="Próxima etapa" onPress={() => {}} />
 
        
-        <View style={styles.divider}>
-          <View style={styles.line} />
-          <Text style={styles.orText}>Ou</Text>
-          <View style={styles.line} />
-        </View>
+       
 
-
-        <ButtonBase2
-  title="Ainda não tem uma conta?"
-  onPress={() => router.push("/auth/registro1")}
-/>
 
         
       </View>
@@ -73,7 +57,7 @@ const styles = StyleSheet.create({
   },
   topo: {
     gap: height * 0.07, 
-    marginBottom: height * 0.02,
+    marginTop: height * 0.08,
   },
   titulos: {
     gap: height * 0.008,
@@ -83,7 +67,7 @@ const styles = StyleSheet.create({
     gap: height * 0.001,
   },
   title: {
-    fontSize: width * 0.08,
+    fontSize: width * 0.06,
     fontWeight: "600",
     color: "#fff",
     textAlign: "center",

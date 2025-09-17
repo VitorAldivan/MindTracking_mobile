@@ -1,8 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions } from "react-native";
-import InputBase from "../components/common/input/inputBase";
-import BirthDateInput from "../components/common/input/inputData";
-import InputGender from "../components/common/input/inputGenero";
-import PhoneInput from "../components/common/input/inputPhone";
+import Verification from "../components/common/input/inputCode";
+
 import ButtonBase from "../components/common/button/button";
 
 
@@ -49,11 +47,15 @@ export default function LoginScreen() {
           </Text>
         </View>
       </View>
+      <View style={styles.inputs}>
+        <Verification code={["", "", "", ""]} setCode={() => {}} />
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      </View>
 
     
 
       <View style={styles.botoes}>
-        <ButtonBase title="Finalizar cadastro" onPress={() => router.push("/auth/confirm-code")} />
+        <ButtonBase title="Finalizar cadastro" onPress={() => router.push("/auth/welcome")} />
 
      
        

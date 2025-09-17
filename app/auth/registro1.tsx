@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   line: {
     flex: 1,
     height: 1,
-    backgroundColor: "#3a3a3aff",
+    backgroundColor: "#FFFFFF33",
   },
   orText: {
     marginHorizontal: width * 0.08,

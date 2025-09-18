@@ -10,16 +10,21 @@ interface VerificationCodeInputProps {
 }
 
 export default function Verification({ code, setCode }: VerificationCodeInputProps) {
-  const inputs = [useRef<TextInput>(null), useRef<TextInput>(null), useRef<TextInput>(null), useRef<TextInput>(null)];
+  const inputs = [
+    useRef<TextInput>(null),
+    useRef<TextInput>(null),
+    useRef<TextInput>(null),
+    useRef<TextInput>(null),
+  ];
 
   const handleChange = (text: string, index: number) => {
     if (text.length > 1) return;
 
-    const newCode = [...code];
-    newCode[index] = text;
-    setCode(newCode);
+    const newCode = [...code];   // cria uma cópia nova
+    newCode[index] = text;       // altera a posição correta
+    setCode(newCode);            // atualiza o estado
 
-    if (text && index < 3) {
+    if (text && index < inputs.length - 1) {
       inputs[index + 1].current?.focus();
     }
   };
@@ -30,9 +35,9 @@ export default function Verification({ code, setCode }: VerificationCodeInputPro
         <TextInput
           key={index}
           ref={inputs[index]}
-          value={digit}
+          value={digit} // <- aqui aparece o número digitado
           onChangeText={(text) => handleChange(text, index)}
-          keyboardType="numeric"
+          keyboardType="number-pad" // apenas números
           maxLength={1}
           style={styles.codeInput}
           placeholder="0"
@@ -52,15 +57,15 @@ const styles = StyleSheet.create({
     marginBottom: height * 0.02,
   },
   codeInput: {
-    backgroundColor: "#1F2937", // igual ao InputBase
+    backgroundColor: "#1F2937",
     borderWidth: 2,
-    borderColor: "#2563EA", // azul do InputBase
+    borderColor: "#2563EA",
     borderRadius: 12,
     width: width * 0.18,
     height: width * 0.19,
     textAlign: "center",
     fontSize: width * 0.06,
     fontWeight: "bold",
-    color: "#fff", // texto branco
+    color: "#fff",
   },
 });

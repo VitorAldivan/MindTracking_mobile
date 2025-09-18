@@ -11,6 +11,7 @@ const { width, height } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const router = useRouter();
+  const [code, setCode] = useState(["", "", "", ""]);
 
   // estados da senha
   const [password, setPassword] = useState("");
@@ -48,7 +49,7 @@ export default function LoginScreen() {
         </View>
       </View>
       <View style={styles.inputs}>
-        <Verification code={["", "", "", ""]} setCode={() => {}} />
+        <Verification code={code} setCode={setCode} />
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
       </View>
 

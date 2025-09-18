@@ -33,7 +33,7 @@ export default function InputGender() {
 
   const rotateInterpolate = rotateAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ["0deg", "-90deg"],
+    outputRange: ["-180deg", "0deg"],
   });
 
   const handleSelect = (gender: string) => {

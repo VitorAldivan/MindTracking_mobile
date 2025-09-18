@@ -32,7 +32,7 @@ export default function Welcome() {
   </TouchableOpacity>
 
   {/* Botão da direita */}
-  <TouchableOpacity style={styles.button}>
+  <TouchableOpacity style={styles.button} onPress={() => router.push("/auth/questionario")}>
     <Text style={styles.buttonText}>Começar</Text>
   </TouchableOpacity>
 </View>

@@ -1,47 +1,62 @@
-// components/BottomNavbar.tsx
 import React from "react";
-import { View, TouchableOpacity, Image, StyleSheet, Dimensions } from "react-native";
+import {
+  View,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Dimensions,
+} from "react-native";
 import { useRouter, usePathname } from "expo-router";
-import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons"; // troque pelos seus ícones
 
-const { width } = Dimensions.get("window");
-const NAVBAR_HEIGHT = 60;
+const { width, height } = Dimensions.get("window");
+
+
+const TABS = [
+  { name: "Home", route: "/home", icon: require("@assets/icons/home.png") },
+  { name: "Notes", route: "/notes", icon: require("@assets/icons/Frame.png") },
+  { name: "Brain", route: "/auth/login", icon: require("@assets/icons/logo.png") },
+  { name: "Grid", route: "/grid", icon: require("@assets/icons/dashboard.png") },
+  { name: "Profile", route: "/profile" },
+];
 
 type Props = {
-  profileImage: string; // URL ou require local da foto de perfil
+  userPhoto?: string;
 };
 
-export default function BottomNavbar({ profileImage }: Props) {
+export default function BottomNavbar({ userPhoto }: Props) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Rotas mapeadas explicitamente
-  const tabs = [
-    { id: "home", route: "/", icon: <Ionicons name="home-outline" size={24} color="white" /> },
-    { id: "notes", route: "/notes", icon: <MaterialIcons name="edit-note" size={26} color="white" /> },
-    { id: "mind", route: "/mind", icon: <FontAwesome5 name="brain" size={22} color="white" /> },
-    { id: "dashboard", route: "/dashboard", icon: <MaterialIcons name="dashboard" size={24} color="white" /> },
-    { id: "profile", route: "/profile", icon: null }, // último é a imagem do usuário
-  ];
-
   return (
     <View style={styles.container}>
-      {tabs.map((tab, index) => {
-        const isActive = pathname === tab.route;
+      {TABS.map((tab, index) => {
+        const isActive = pathname.startsWith(tab.route); // ✅ corrigido
 
         return (
           <TouchableOpacity
             key={index}
             style={[styles.tab, isActive && styles.activeTab]}
-            onPress={() => router.push(tab.route)}
+            onPress={() => router.push(tab.route as any)}
           >
-            {tab.id === "profile" ? (
+            {tab.name === "Profile" ? (
               <Image
-                source={{ uri: profileImage }}
-                style={[styles.profileImage, isActive && styles.activeProfile]}
+                source={
+                  userPhoto
+                    ? { uri: userPhoto }
+                    : require("@assets/icons/perfil.png")
+                }
+                style={styles.profilePic}
               />
             ) : (
-              tab.icon
+              <Image
+  source={tab.icon}
+  style={[
+    styles.icon,
+    isActive && styles.iconActive,
+    tab.name === "Brain" && styles.logoIcon, // 👈 tamanho especial só pro logo
+  ]}
+  resizeMode="contain"
+/>
             )}
           </TouchableOpacity>
         );
@@ -52,32 +67,46 @@ export default function BottomNavbar({ profileImage }: Props) {
 
 const styles = StyleSheet.create({
   container: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: height * 0.08,
     flexDirection: "row",
-    height: NAVBAR_HEIGHT,
-    backgroundColor: "#0F1A2F",
-    justifyContent: "space-around",
+    justifyContent: "space-between", // 👈 agora os cantos ficam fixos
     alignItems: "center",
-    borderTopWidth: 1,
-    borderTopColor: "#1E2B45",
+    backgroundColor: "#1E293B",
+    borderTopWidth: height * 0.004,
+    borderTopColor: "#2563EA",
+    paddingHorizontal: width * 0.06, // 👈 margem fixa da borda
   },
   tab: {
-    flex: 1,
+    minWidth: width * 0.12, // 👈 garante largura mínima pro azul
     justifyContent: "center",
     alignItems: "center",
-    height: NAVBAR_HEIGHT,
+    borderRadius: 30,
+    paddingVertical: 8,
   },
   activeTab: {
-    backgroundColor: "rgba(0,122,255,0.2)", // círculo azul
-    borderRadius: 30,
-    margin: 5,
+    backgroundColor: "#2563eb",
+    paddingHorizontal: width * 0.04, // 👈 o highlight fica maior sem mudar a posição do ícone
   },
-  profileImage: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  icon: {
+    width: 26,
+    height: 26,
+    tintColor: "#fff",
   },
-  activeProfile: {
-    borderWidth: 2,
-    borderColor: "#007AFF",
+  logoIcon:{
+    width: 47,
+    height: 47,
+  },
+
+  iconActive: {
+    tintColor: "#fff",
+  },
+  profilePic: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
   },
 });

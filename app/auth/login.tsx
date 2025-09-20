@@ -1,10 +1,9 @@
 import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions } from "react-native";
-import InputBase from "../components/common/input/inputBase"; // seu input já pronto
+import InputBase from "../components/common/input/inputBase"; 
 import ButtonBase from "../components/common/button/button";
 import ButtonBase2 from "../components/common/button/button2";
-import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router"; 
-// Pega altura e largura da tela
+
 const { width, height } = Dimensions.get("window");
 
 export default function LoginScreen() {
@@ -26,33 +25,33 @@ export default function LoginScreen() {
       </View>
 
       <InputBase placeholder="Digite seu email" iconLeft="email" />
-      <InputBase iconLeft="senha" placeholder="Senha" 
-      eyeOpenIcon={require("@assets/icons/eye.png")}
-      eyeClosedIcon={require("@assets/icons/eye-off.png")}/>
+      <InputBase 
+        iconLeft="senha" 
+        placeholder="Senha" 
+        eyeOpenIcon={require("@assets/icons/eye.png")}
+        eyeClosedIcon={require("@assets/icons/eye-off.png")}
+      />
 
-      
       <TouchableOpacity onPress={() => router.push("/auth/redefined")}>
         <Text style={styles.forgotText}>Esqueceu sua senha?</Text>
       </TouchableOpacity>
 
       <View style={styles.botoes}>
-        <ButtonBase title="Fazer login" onPress={() => {}} />
+        <ButtonBase title="Fazer login" onPress={() => router.push("/(tabs)/home")} />
 
-       
         <View style={styles.divider}>
           <View style={styles.line} />
           <Text style={styles.orText}>Ou</Text>
           <View style={styles.line} />
         </View>
 
-
         <ButtonBase2
-  title="Ainda não tem uma conta?"
-  onPress={() => router.push("/auth/registro1")}
-/>
-
-        
+          title="Ainda não tem uma conta?"
+          onPress={() => router.push("/auth/registro1")}
+        />
       </View>
+
+
     </View>
   );
 }
@@ -64,12 +63,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: width * 0.08, 
     paddingVertical: height * 0.06, 
     justifyContent: "center",
+    paddingBottom: 70, // espaço extra p/ navbar não sobrepor botões
   },
   logo: {
     width: width * 0.22, 
     height: height * 0.08, 
     marginTop: 0,
-    
   },
   topo: {
     gap: height * 0.07, 

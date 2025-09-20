@@ -41,13 +41,10 @@ export default function PreLogin() {
         <View style={styles.titulos}>
           <Text style={styles.title}>MindTracking</Text>
           <Text style={styles.subtitle}>
-            Bem-estar começa com um passo. {'\n'}                
-              Dê o primeiro hoje!  
+            Bem-estar começa com um passo. {"\n"}Dê o primeiro hoje!
           </Text>
         </View>
       </View>
-
-      
 
       <View style={styles.botoes}>
         <ButtonBase title="Começar agora" onPress={() => router.push("/auth/registro1")} />
@@ -63,6 +60,8 @@ export default function PreLogin() {
           onPress={() => router.push("/auth/login")}
         />
       </View>
+
+    
     </View>
   );
 }
@@ -90,14 +89,13 @@ const styles = StyleSheet.create({
   },
   titulos: {
     gap: height * 0.02,
-    marginBottom: height * 0.05
+    marginBottom: height * 0.05,
   },
   botoes: {
     marginBottom: height * -0.09,
     gap: height * 0.001,
     paddingTop: 15,
   },
-  
   title: {
     fontSize: width * 0.08,
     fontWeight: "600",
@@ -105,7 +103,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontFamily: "Inter_500Medium",
   },
-  
   subtitle: {
     fontSize: width * 0.04,
     color: "#ffffffff",

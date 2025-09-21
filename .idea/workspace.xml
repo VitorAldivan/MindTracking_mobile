@@ -6,12 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="5dc65422-c523-4db1-8e78-65da04a7df45" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(tabs)/_layout.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(tabs)/explore.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(tabs)/index.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/login.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/login.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/pre-login.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/pre-login.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(tabs)/home.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/home.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/components/cards/card1.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/components/cards/card1.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/components/navbar/navbar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/components/navbar/navbar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/constants/theme.ts" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

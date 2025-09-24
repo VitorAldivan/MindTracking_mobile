@@ -1,13 +1,37 @@
-import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions } from "react-native";
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions, Alert, ActivityIndicator } from "react-native";
 import InputBase from "../components/common/input/inputBase"; 
 import ButtonBase from "../components/common/button/button";
 import ButtonBase2 from "../components/common/button/button2";
 import { useRouter } from "expo-router"; 
+import { login } from "../service/auth";
 
 const { width, height } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (!email.trim() || !senha) {
+      Alert.alert("Erro", "Preencha email e senha.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const data = await login(email.trim(), senha);
+      Alert.alert("Sucesso", "Login realizado com sucesso!");
+      // Aqui você pode salvar token ou navegar para outra tela
+      router.push("/(tabs)/home");
+    } catch (err: any) {
+      const message = err?.message || err?.erro || "Falha no login";
+      Alert.alert("Erro no login", message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -24,12 +48,22 @@ export default function LoginScreen() {
         </View>
       </View>
 
-      <InputBase placeholder="Digite seu email" iconLeft="email" />
+      <InputBase
+        placeholder="Digite seu email"
+        iconLeft="email"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
+      />
       <InputBase 
         iconLeft="senha" 
         placeholder="Senha" 
         eyeOpenIcon={require("@assets/icons/eye.png")}
         eyeClosedIcon={require("@assets/icons/eye-off.png")}
+        value={senha}
+        onChangeText={setSenha}
+        secureTextEntry
       />
 
       <TouchableOpacity onPress={() => router.push("/auth/redefined")}>
@@ -37,7 +71,10 @@ export default function LoginScreen() {
       </TouchableOpacity>
 
       <View style={styles.botoes}>
-        <ButtonBase title="Fazer login" onPress={() => router.push("/(tabs)/home")} />
+        <ButtonBase
+          title={loading ? "Entrando..." : "Fazer login"}
+          onPress={handleLogin}
+        />
 
         <View style={styles.divider}>
           <View style={styles.line} />
@@ -51,7 +88,11 @@ export default function LoginScreen() {
         />
       </View>
 
-
+      {loading && (
+        <View style={{ position: "absolute", top: 10, right: 10 }}>
+          <ActivityIndicator size="small" color="#fff" />
+        </View>
+      )}
     </View>
   );
 }

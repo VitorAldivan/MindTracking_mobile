@@ -44,7 +44,7 @@ export default function InfoCard({ variant, onPress }: Props) {
 const styles = StyleSheet.create({
   card: {
     width: "100%",
-    height: height*0.085,
+    height: height*0.075,
     backgroundColor: "#29374F",
     borderRadius: 16,
     flexDirection: "row",

@@ -1,9 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions } from "react-native";
-import InputBase from "../components/common/input/inputBase"; // seu input já pronto
-import ButtonBase from "../components/common/button/button";
-import ButtonBase2 from "../components/common/button/button2";
-import { useNavigation } from "@react-navigation/native";
-import { useRouter } from "expo-router"; 
+import { useRouter } from "expo-router";
+import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 // Pega altura e largura da tela
 const { width, height } = Dimensions.get("window");
 
@@ -25,17 +21,13 @@ export default function Welcome() {
         </View>
       </View>
 
-     <View style={styles.buttonContainer}>
-  {/* Botão da esquerda */}
-  <TouchableOpacity style={styles.button}>
-    <Text style={styles.buttonText}>Voltar</Text>
-  </TouchableOpacity>
 
-  {/* Botão da direita */}
-  <TouchableOpacity style={styles.button} onPress={() => router.push("/auth/questionario")}>
-    <Text style={styles.buttonText}>Começar</Text>
-  </TouchableOpacity>
-</View>
+    <View style={styles.buttonContainer}>
+      <View style={{ flex: 1 }} />
+      <TouchableOpacity style={styles.button} onPress={() => router.push("/auth/questionario")}> 
+        <Text style={styles.buttonText}>Começar</Text>
+      </TouchableOpacity>
+    </View>
 
    
       

@@ -59,7 +59,7 @@ export default function FeatureCard({ variant, done = false, onPress }: Props) {
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    height: height * 0.235,
+    height: height * 0.225,
     backgroundColor: "#29374F",
     borderRadius: 16,
     paddingTop: height * 0.012,

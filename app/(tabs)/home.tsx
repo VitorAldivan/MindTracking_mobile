@@ -4,7 +4,6 @@ import {
   Image,
   Modal,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -30,17 +29,17 @@ export default function Dashboard() {
 
   return (
     <>
-      {/* Conteúdo principal */}
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={styles.screen}>
           {/* TOPO */}
           <View style={styles.header}>
-            <View>
-              <Text style={styles.day}>Segunda-Feira</Text>
-              <Text style={styles.date}>11 de Junho</Text>
+            <View style={{ flexShrink: 1 }}>
+              <Text style={styles.day} numberOfLines={1} ellipsizeMode="tail">
+                Segunda-Feira
+              </Text>
+              <Text style={styles.date} numberOfLines={1} ellipsizeMode="tail">
+                11 de Junho
+              </Text>
             </View>
             <Image
               source={{ uri: "https://i.pravatar.cc/100" }}
@@ -49,7 +48,13 @@ export default function Dashboard() {
           </View>
 
           {/* PERGUNTA */}
-          <Text style={styles.question}>Como você está se sentindo hoje?</Text>
+          <Text
+            style={styles.question}
+            numberOfLines={2}
+            ellipsizeMode="tail"
+          >
+            Como você está se sentindo hoje?
+          </Text>
 
           {/* CARDS DE AÇÃO */}
           <View style={styles.actionRow}>
@@ -59,8 +64,18 @@ export default function Dashboard() {
 
           {/* SEÇÃO DESEJO */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>O que você deseja?</Text>
-            <Text style={styles.sectionSubtitle}>
+            <Text
+              style={styles.sectionTitle}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              O que você deseja?
+            </Text>
+            <Text
+              style={styles.sectionSubtitle}
+              numberOfLines={2}
+              ellipsizeMode="tail"
+            >
               Opções para melhorar seu dia
             </Text>
           </View>
@@ -71,10 +86,11 @@ export default function Dashboard() {
             <InfoCard variant="recomendacao" />
             <InfoCard variant="apoio" />
           </View>
-        </ScrollView>
+
+          <View style={{ height: height * 0.05 }} />
+        </View>
       </SafeAreaView>
 
-      {/* 🔥 Modal global cobrindo tudo */}
       <Modal
         visible={showModal}
         transparent
@@ -112,27 +128,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#0F172A",
   },
-  scrollContent: {
+  screen: {
+    flex: 1,
     paddingHorizontal: width * 0.065,
-    paddingBottom: height * 0.12, // deixa espaço pra navbar fixa
-    minHeight: height,
+    paddingBottom: height * 0.06, // espaço para navbar fixa
+    overflow: "hidden",
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: height * 0.025,
-    marginTop: height * 0.1,
+    marginTop: height * 0.08,
+    overflow: "hidden",
   },
   day: {
     fontSize: Math.max(width * 0.05, 14),
     color: "#fff",
     fontFamily: "Inter_600SemiBold",
+    flexShrink: 1,
   },
   date: {
     fontSize: Math.max(width * 0.035, 12),
     color: "#9199AA",
     fontFamily: "Inter_600SemiBold",
+    flexShrink: 1,
   },
   avatar: {
     width: width * 0.18,
@@ -144,34 +164,39 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginBottom: height * 0.025,
     fontFamily: "Inter_600SemiBold",
+    flexShrink: 1,
   },
   actionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     gap: width * 0.001,
     marginBottom: height * 0.025,
+    overflow: "hidden",
   },
   section: {
     marginBottom: height * 0.02,
+    overflow: "hidden",
   },
   sectionTitle: {
     fontSize: Math.max(width * 0.045, 13),
     color: "#fff",
     marginBottom: height * 0.008,
     fontFamily: "Inter_600SemiBold",
+    flexShrink: 1,
   },
   sectionSubtitle: {
     fontSize: Math.max(width * 0.035, 12),
     marginBottom: height * 0.012,
     color: "#9199AA",
     fontFamily: "Inter_600SemiBold",
+    flexShrink: 1,
   },
   infoList: {
-    gap: height * 0.019,
-    marginBottom: height * 0.05,
+    gap: height * 0.012,
+    marginBottom: height * 0.02,
+    overflow: "hidden",
   },
 
-  /* Navbar fixa */
   navbarWrapper: {
     position: "absolute",
     bottom: 0,
@@ -179,7 +204,6 @@ const styles = StyleSheet.create({
     right: 0,
   },
 
-  /* Modal */
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.6)",
@@ -200,6 +224,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_700Bold",
     color: "#fff",
     marginBottom: height * 0.035,
+    flexShrink: 1,
   },
   modalSubtitle: {
     fontSize: width * 0.038,
@@ -207,6 +232,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginBottom: height * 0.03,
     lineHeight: height * 0.028,
+    flexShrink: 1,
   },
   modalButton: {
     backgroundColor: "#15803D",

@@ -34,6 +34,7 @@ export default function PreLogin() {
   return (
     <View style={styles.container}>
       {/* Header dinâmico */}
+      {/* Header dinâmico com título e logo que mudam de tamanho/texto */}
       {!isChat ? (
         <View style={styles.topo}>
           <Image
@@ -51,10 +52,10 @@ export default function PreLogin() {
           <View style={[styles.headerRow, styles.headerRowChat]}>
             <Image
               source={require("../../assets/icons/logo.png")}
-              style={[styles.logo, styles.logoChat]}
+              style={isChat ? [styles.logo, styles.logoChat, styles.logoChatActive] : [styles.logo, styles.logoChat]}
               resizeMode="contain"
             />
-            <Text style={[styles.title, styles.titleChat]}>Athena</Text>
+            <Text style={[styles.title, styles.titleChat, styles.titleChatActive]}>Assistente Emocional</Text>
           </View>
         </View>
       )}
@@ -150,6 +151,10 @@ const styles = StyleSheet.create({
     marginRight: width * 0.02,
     alignSelf: "flex-end",
   },
+  logoChatActive: {
+    width: width * 0.18,
+    height: height * 0.11,
+  },
   topo: {
     gap: height * 0.05,
     marginBottom: height * 0.02,
@@ -159,6 +164,7 @@ const styles = StyleSheet.create({
     marginBottom: height * 0.01,
     alignItems: "flex-start",
     paddingTop: height * 0.01,
+    
   },
   headerFixed: {
     position: "absolute",
@@ -168,8 +174,8 @@ const styles = StyleSheet.create({
     zIndex: 100,
     backgroundColor: "#0F172A",
     paddingHorizontal: width * 0.08,
-    paddingTop: height * 0.04,
-    paddingBottom: height * 0.01,
+    paddingTop: height * 0.06,
+    paddingBottom: height * 0.02,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -205,6 +211,11 @@ const styles = StyleSheet.create({
     marginLeft: width * 0.01,
     alignSelf: "center",
   },
+  titleChatActive: {
+    fontSize: width * 0.055,
+    fontFamily: "Inter_700Bold",
+    marginRight: width * 0.07,
+  },
   subtitle: {
     fontSize: width * 0.04,
     color: "#ffffffff",
@@ -217,6 +228,7 @@ const styles = StyleSheet.create({
     gap: width * 0.05,
     paddingHorizontal: width * 0.02,
     marginBottom: 0,
+    paddingVertical: height * 0.015,
   },
   inferior: {
     position: "absolute",
@@ -224,6 +236,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: height * 0.14 + height * 0.02,
     paddingHorizontal: width * 0.08,
+    
   },
   chatScroll: {
     flex: 1,

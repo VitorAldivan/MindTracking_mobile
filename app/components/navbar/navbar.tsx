@@ -1,12 +1,12 @@
+import { usePathname, useRouter } from "expo-router";
 import React from "react";
 import {
-  View,
-  TouchableOpacity,
+  Dimensions,
   Image,
   StyleSheet,
-  Dimensions,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useRouter, usePathname } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width, height } = Dimensions.get("window");
@@ -31,7 +31,7 @@ export default function BottomNavbar({ userPhoto }: Props) {
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom }]}>
       {TABS.map((tab, index) => {
-        const isActive = pathname === tab.route;
+        const isActive = pathname.includes(tab.route) || tab.route.includes(pathname);
 
 
 
@@ -88,20 +88,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 30,
-    paddingVertical: 8,
+    paddingVertical: height * 0.006,
   },
   activeTab: {
     backgroundColor: "#2563eb",
-    paddingHorizontal: width * 0.04,
+    paddingHorizontal: width * 0.03,
   },
   icon: {
-    width: 26,
-    height: 26,
+    width: width * 0.065,
+    height: height * 0.04,
     tintColor: "#fff",
   },
   logoIcon: {
-    width: 47,
-    height: 47,
+    width: width * 0.12,
+    height: height * 0.06,
   },
   iconActive: {
     tintColor: "#fff",

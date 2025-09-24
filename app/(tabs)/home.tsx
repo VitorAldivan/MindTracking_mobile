@@ -1,18 +1,17 @@
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
   Dimensions,
-  ScrollView,
-  SafeAreaView,
-  TouchableOpacity,
+  Image,
   Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import FeatureCard from "../components/cards/card1";
 import InfoCard from "../components/cards/card2";
-import BottomNavbar from "../components/navbar/navbar";
 
 const { width, height } = Dimensions.get("window");
 
@@ -73,11 +72,6 @@ export default function Dashboard() {
             <InfoCard variant="apoio" />
           </View>
         </ScrollView>
-
-        {/* 🔥 Navbar fixa */}
-        <View style={styles.navbarWrapper}>
-          <BottomNavbar />
-        </View>
       </SafeAreaView>
 
       {/* 🔥 Modal global cobrindo tudo */}

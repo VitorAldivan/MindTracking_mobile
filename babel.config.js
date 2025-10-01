@@ -13,9 +13,6 @@ module.exports = function(api) {
           },
         },
       ],
-    ],
-    plugins: [
-      ...
       'react-native-worklets/plugin',
     ],
   };

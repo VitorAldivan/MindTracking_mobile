@@ -56,7 +56,7 @@ export default function LoginScreen() {
     
 
       <View style={styles.botoes}>
-        <ButtonBase title="Finalizar cadastro" onPress={() => router.push("/(tabs)/home")} />
+        <ButtonBase title="Finalizar cadastro" onPress={() => router.push("/auth/welcome")} />
 
      
        

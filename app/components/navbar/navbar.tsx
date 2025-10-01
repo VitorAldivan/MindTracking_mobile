@@ -16,7 +16,7 @@ const TABS = [
   { name: "Notes", route: "/(tabs)/notes", icon: require("@assets/icons/Frame.png") },
   { name: "Brain", route: "/(tabs)/ia", icon: require("@assets/icons/logo.png") },
   { name: "Grid", route: "/(tabs)/dashboard", icon: require("@assets/icons/dashboard.png") },
-  { name: "Profile", route: "/(tabs)/profile", icon: require("@assets/icons/perfil.png") }, // Corrigi o ícone para seguir o padrão
+  { name: "Profile", route: "/(tabs)/perfil", icon: require("@assets/icons/perfil.png") }, // Corrigi o ícone para seguir o padrão
 ];
 
 type Props = {

@@ -43,8 +43,8 @@ export default function Questionnaire() {
 
     Animated.timing(progressAnim, {
       toValue: newProgress,
-      duration: 500, // meio segundo de animação
-      useNativeDriver: false, // largura não suporta native driver
+      duration: 500, 
+      useNativeDriver: false, 
     }).start();
   }, [currentQuestionIndex]);
 
@@ -52,7 +52,6 @@ export default function Questionnaire() {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
-      // router.push("/final");
     }
   };
 
@@ -74,7 +73,7 @@ export default function Questionnaire() {
         </View>
 
         <View style={styles.progressContainer}>
-          {/* Animated.View no lugar da View normal */}
+          
           <Animated.View
             style={[
               styles.progressBar,
@@ -93,7 +92,6 @@ export default function Questionnaire() {
 
   return (
     <View style={styles.container}>
-      {/* wrapper com altura fixa */}
       <View style={styles.backButtonWrapper}>
         {currentQuestionIndex > 0 && (
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
@@ -105,10 +103,8 @@ export default function Questionnaire() {
         )}
       </View>
 
-      {/* barra de progresso */}
       {renderProgressBar()}
 
-      {/* wrapper que centraliza a pergunta */}
       <View style={styles.middleWrapper}>
         <View style={styles.questionWrapper}>
           <View style={styles.verticalLine} />
@@ -118,7 +114,6 @@ export default function Questionnaire() {
         </View>
       </View>
 
-      {/* opções */}
       <View style={styles.optionContainer}>
         {["Nunca", "Raramente", "Às vezes", "Sempre"].map((option, index) => (
           <TouchableOpacity key={index} style={styles.option} onPress={handleNext}>
@@ -144,12 +139,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   backButton: {
-    marginBottom: height * 0.02,
+    marginBottom: height * 0.01,
+    marginTop: height * 0.05,
   },
   seta: {
     width: width * 0.09,
     height: width * 0.08,
-    tintColor: "#3F3F46",
+    tintColor: "#fff",
     resizeMode: "contain",
     marginBottom: height * 0.025,
     transform: [{ rotate: "90deg" }],

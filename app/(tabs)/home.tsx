@@ -62,7 +62,6 @@ export default function Dashboard() {
             <FeatureCard variant="athena" />
           </View>
 
-          {/* SEÇÃO DESEJO */}
           <View style={styles.section}>
             <Text
               style={styles.sectionTitle}
@@ -80,7 +79,6 @@ export default function Dashboard() {
             </Text>
           </View>
 
-          {/* INFO CARDS */}
           <View style={styles.infoList}>
             <InfoCard variant="diario" />
             <InfoCard variant="recomendacao" />
@@ -131,7 +129,7 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     paddingHorizontal: width * 0.065,
-    paddingBottom: height * 0.06, // espaço para navbar fixa
+    paddingBottom: height * 0.06, 
     overflow: "hidden",
   },
   header: {

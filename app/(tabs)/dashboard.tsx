@@ -1,7 +1,7 @@
 import React from "react";
 import { Dimensions, ScrollView, StyleSheet, View } from "react-native";
 import { CorrelationsCard, InfoCard, StatCard } from "../components/cards/cardDashboard1";
-import { WellbeingChart } from "../components/cards/grafico";
+//import { WellbeingChart } from "../components/cards/grafico";
 
 
 const { width, height } = Dimensions.get("window");
@@ -42,7 +42,7 @@ export default function Dashboard() {
           ]}
         />
 
-        <WellbeingChart
+        {/* <WellbeingChart
           data={[
             { xLabel: '10/07', value: 8 },
             { xLabel: '11/07', value: 9 },
@@ -54,7 +54,7 @@ export default function Dashboard() {
           ]}
           avgLabel="Média: 6.8"
           bestLabel="Melhor dia: 8.0 (qui)"
-        />
+        /> */}
       </ScrollView>
     </View>
   );

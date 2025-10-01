@@ -3,9 +3,11 @@ import InputIA from "../components/common/input/inputIA";
 
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Dimensions, Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Dimensions, FlatList, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 
 const { width, height } = Dimensions.get("window");
+
+// ... imports inalterados
 
 export default function PreLogin() {
   const router = useRouter();
@@ -15,14 +17,15 @@ export default function PreLogin() {
   const [chatStarted, setChatStarted] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const handleSend = () => {
-    if (inputValue.trim() === "") return;
-    setMessages(prev => [...prev, inputValue]);
-    setInputValue("");
-    setChatStarted(true);
+  // Aceita texto opcional para envio programático (cards)
+  const handleSend = (text?: string) => {
+    const toSend = (text ?? inputValue).trim();
+    if (!toSend) return;
+    setMessages(prev => [...prev, toSend]);
+    setInputValue("");      // não polui o teclado
+    setChatStarted(true);   // força header fixo quando começar
   };
 
-  // Scroll para o final sempre que uma mensagem for enviada
   useEffect(() => {
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollToEnd({ animated: true });
@@ -33,94 +36,101 @@ export default function PreLogin() {
 
   return (
     <View style={styles.container}>
-      {/* Header dinâmico */}
-      {/* Header dinâmico com título e logo que mudam de tamanho/texto */}
-      {!isChat ? (
-        <View style={styles.topo}>
+    {/* Header dinâmico igual ao seu */}
+    {!isChat ? (
+      <View style={styles.topo}>
+        <Image source={require("../../assets/icons/logo.png")} style={styles.logo} resizeMode="contain" />
+        <View style={styles.titulos}>
+          <Text style={styles.title}>Athena</Text>
+          <Text style={styles.subtitle}>Sua aliada emocional</Text>
+        </View>
+      </View>
+    ) : (
+      <View style={styles.headerFixed}>
+        <View style={[styles.headerRow, styles.headerRowChat]}>
           <Image
             source={require("../../assets/icons/logo.png")}
-            style={styles.logo}
+            style={[styles.logo, styles.logoChat, styles.logoChatActive]}
             resizeMode="contain"
           />
-          <View style={styles.titulos}>
-            <Text style={styles.title}>Athena</Text>
-            <Text style={styles.subtitle}>Sua aliada emocional</Text>
-          </View>
+          <Text style={[styles.title, styles.titleChat, styles.titleChatActive]}>Assistente Emocional</Text>
         </View>
-      ) : (
-        <View style={styles.headerFixed}>
-          <View style={[styles.headerRow, styles.headerRowChat]}>
-            <Image
-              source={require("../../assets/icons/logo.png")}
-              style={isChat ? [styles.logo, styles.logoChat, styles.logoChatActive] : [styles.logo, styles.logoChat]}
-              resizeMode="contain"
-            />
-            <Text style={[styles.title, styles.titleChat, styles.titleChatActive]}>Assistente Emocional</Text>
-          </View>
-        </View>
-      )}
-
-      {/* Cards + Input agrupados na mesma View */}
-      <View style={styles.inferior}>
-        {!isChat ? (
-          <>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.scrollContent}
-              style={styles.cardsScroll}
-            >
-              <CustomButton 
-                title="O que posso fazer para me sentir melhor hoje?" 
-                onPress={() => setInputValue("O que posso fazer para me sentir melhor hoje?")} 
-              />
-              <CustomButton 
-                title="Registrar meu humor" 
-                onPress={() => setInputValue("Registrar meu humor")} 
-              />
-              <CustomButton 
-                title="Meditação guiada" 
-                onPress={() => setInputValue("Meditação guiada")} 
-              />
-              <CustomButton 
-                title="Exercícios rápidos" 
-                onPress={() => setInputValue("Exercícios rápidos")} 
-              />
-            </ScrollView>
-            <InputIA
-              value={inputValue}
-              onChangeText={setInputValue}
-              onIconPress={handleSend}
-              placeholder="Digite sua mensagem..."
-            />
-          </>
-        ) : (
-          <>
-            {/* Chat messages scroll reverso */}
-            <ScrollView
-              ref={scrollViewRef}
-              style={styles.chatScroll}
-              contentContainerStyle={styles.chatContainer}
-              showsVerticalScrollIndicator={false}
-            >
-              {messages.map((msg, idx) => (
-                <View key={idx} style={styles.messageBubble}>
-                  <Text style={styles.messageText}>{msg}</Text>
-                </View>
-              ))}
-            </ScrollView>
-            <InputIA
-              value={inputValue}
-              onChangeText={setInputValue}
-              onIconPress={handleSend}
-              placeholder="Digite sua mensagem..."
-            />
-          </>
-        )}
       </View>
-    </View>
+    )}
+
+    {/* Cards + Input */}
+    {!isChat ? (
+      <View style={styles.inferior}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          style={styles.cardsScroll}
+        >
+          <CustomButton
+            title="O que posso fazer para me sentir melhor hoje?"
+            onPress={() => handleSend("O que posso fazer para me sentir melhor hoje?")}
+          />
+          <CustomButton
+            title="Registrar meu humor"
+            onPress={() => handleSend("Registrar meu humor")}
+          />
+          <CustomButton
+            title="Meditação guiada"
+            onPress={() => handleSend("Meditação guiada")}
+          />
+          <CustomButton
+            title="Exercícios rápidos"
+            onPress={() => handleSend("Exercícios rápidos")}
+          />
+        </ScrollView>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
+        >
+          <InputIA
+            value={inputValue}
+            onChangeText={setInputValue}
+            onIconPress={() => handleSend()}
+            placeholder="Digite sua mensagem..."
+          />
+        </KeyboardAvoidingView>
+      </View>
+    ) : (
+      <View style={{flex: 1, paddingBottom: height * 0.12}}>
+        <FlatList
+          inverted
+          data={messages}
+          keyExtractor={(_, idx) => String(idx)}
+          contentContainerStyle={styles.chatContainer}
+          style={styles.chatScroll}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <View style={styles.messageBubble}>
+              <Text style={styles.messageText}>{item}</Text>
+            </View>
+          )}
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 1,
+          }}
+        />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
+        >
+          <InputIA
+            value={inputValue}
+            onChangeText={setInputValue}
+            onIconPress={() => handleSend()}
+            placeholder="Digite sua mensagem..."
+          />
+        </KeyboardAvoidingView>
+      </View>
+    )}
+      </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   cardsScroll: {},
@@ -130,7 +140,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: height * 0.14 + height * 0.02,
     paddingHorizontal: width * 0.08,
-    backgroundColor: "transparent",
+    backgroundColor: "#0F172A",
   },
   container: {
     flex: 1,
@@ -176,11 +186,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: width * 0.08,
     paddingTop: height * 0.06,
     paddingBottom: height * 0.02,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 8,
+    
+    
   },
   headerRow: {
     flexDirection: "row",

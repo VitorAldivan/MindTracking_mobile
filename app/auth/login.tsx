@@ -1,10 +1,9 @@
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions, Alert, ActivityIndicator } from "react-native";
-import InputBase from "../components/common/input/inputBase"; 
+import { ActivityIndicator, Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ButtonBase from "../components/common/button/button";
 import ButtonBase2 from "../components/common/button/button2";
-import { useRouter } from "expo-router"; 
-import { login } from "../service/auth";
+import InputBase from "../components/common/input/inputBase";
 
 const { width, height } = Dimensions.get("window");
 
@@ -14,23 +13,8 @@ export default function LoginScreen() {
   const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email.trim() || !senha) {
-      Alert.alert("Erro", "Preencha email e senha.");
-      return;
-    }
-    setLoading(true);
-    try {
-      const data = await login(email.trim(), senha);
-      Alert.alert("Sucesso", "Login realizado com sucesso!");
-      // Aqui você pode salvar token ou navegar para outra tela
-      router.push("/(tabs)/home");
-    } catch (err: any) {
-      const message = err?.message || err?.erro || "Falha no login";
-      Alert.alert("Erro no login", message);
-    } finally {
-      setLoading(false);
-    }
+  const handleLogin = () => {
+    router.push("/(tabs)/home");
   };
 
   return (

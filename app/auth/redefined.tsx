@@ -1,9 +1,7 @@
-import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions } from "react-native";
-import InputBase from "../components/common/input/inputBase"; // seu input já pronto
+import { useRouter } from "expo-router";
+import { Dimensions, StyleSheet, Text, View } from "react-native";
 import ButtonBase from "../components/common/button/button";
-import ButtonBase2 from "../components/common/button/button2";
-import { useNavigation } from "@react-navigation/native";
-import { useRouter } from "expo-router"; 
+import InputBase from "../components/common/input/inputBase"; // seu input já pronto
 // Pega altura e largura da tela
 const { width, height } = Dimensions.get("window");
 
@@ -29,7 +27,7 @@ export default function LoginScreen() {
       
    
       <View style={styles.botoes}>
-        <ButtonBase title="Próxima etapa" onPress={() => {}} />
+  <ButtonBase title="Próxima etapa" onPress={() => router.push('/auth/confirm-code')} />
 
        
        

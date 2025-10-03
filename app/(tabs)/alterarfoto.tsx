@@ -1,22 +1,40 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-  Image,
-  Pressable,
-} from "react-native";
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from "expo-router";
-import CardDenominado from "../components/cards/cardPerfil";
+import { useEffect } from 'react';
+import {
+    Alert, Dimensions,
+    Image,
+    Pressable, StyleSheet, Text,
+    TouchableOpacity, View
+} from 'react-native';
+import ButtonBase from "../components/common/button/button";
+
 
 const { width, height } = Dimensions.get("window");
-const AVATAR_SIZE = width * 0.442; // Responsivo, igual ao seu avatar
-const EDIT_SIZE = AVATAR_SIZE * 0.24; // Proporcional ao avatar
-
+const AVATAR_SIZE = width * 0.482; // Responsivo, igual ao seu avatar
+const EDIT_SIZE = AVATAR_SIZE * 0.24;
 export default function Perfil() {
   const router = useRouter();
+  useEffect(() => {
+  (async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permissão necessária", "Permita o acesso à galeria.");
+      router.back();
+      return;
+    }
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+    if (!result.canceled) {
+      // Aqui você pode capturar result.assets[0].uri
+      // router.back(); // Ou qualquer outra navegação após escolher
+    }
+  })();
+}, []);
+
 
   return (
     <View style={styles.container}>
@@ -39,27 +57,23 @@ export default function Perfil() {
             style={styles.avatar}
           />
           <Pressable
-            style={styles.editButton}
-            onPress={() => router.push("/(tabs)/alterarfoto")}
-          >
-            <View style={styles.editCircle}>
-              <Image
-                source={require("@assets/icons/Edit.png")}
-                style={styles.editIcon}
-              />
-            </View>
-          </Pressable>
+  style={styles.editButton}
+  onPress={() => router.push("/(tabs)/alterarfoto")}
+>
+  <View style={styles.editCircle}>
+    <Image
+      source={require("@assets/icons/Edit.png")}
+      style={styles.editIcon}
+    />
+  </View>
+</Pressable>
+          
         </View>
-        <Text style={styles.name}>João</Text>
-        <Text style={styles.email}>joaoHEnriq.mtins@gmail.com</Text>
+        <Text style={styles.titulo}>Deseja alterar a foto?</Text>
+        <ButtonBase title="Continuar" onPress={() => router.push("/(tabs)/alterarfoto")} />
       </View>
 
-      <View style={styles.cardsContainer}>
-        <CardDenominado tipo="progresso" />
-        <CardDenominado tipo="alterarSenha" />
-        <CardDenominado tipo="editarPerfil" />
-        <CardDenominado tipo="sairDaConta" />
-      </View>
+      
     </View>
   );
 }
@@ -71,11 +85,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: width * 0.07,
     paddingTop: height * 0.06,
   },
-  cardsContainer: {},
+  
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: height * 0.02,
+    marginBottom: height * 0.15,
   },
   seta: {
     width: width * 0.09,
@@ -88,13 +102,13 @@ const styles = StyleSheet.create({
   },
   topo: {
     alignItems: "center",
-    gap: height * 0.002,
-    marginBottom: height * 0.05,
+    gap: height * 0.04,
+    marginBottom: height * 0.,
+    
   },
   textContainer: {
     flex: 1,
-    alignItems: "center",
-  },
+    alignItems: "center",  },
   perfilText: {
     color: "#fff",
     fontSize: Math.max(width * 0.05, 14),
@@ -106,13 +120,6 @@ const styles = StyleSheet.create({
     position: "relative", // Permite posicionamento absoluto do botão
     alignItems: "center",
     justifyContent: "center",
-  },
-  avatar: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-    borderRadius: AVATAR_SIZE / 2,
-    borderWidth: 3,
-    borderColor: "#1E293B",
   },
   editButton: {
     position: "absolute",
@@ -133,17 +140,18 @@ const styles = StyleSheet.create({
     height: EDIT_SIZE * 0.6,
     resizeMode: "contain",
   },
-  name: {
+  avatar: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
+    borderWidth: 3,
+    borderColor: "#1E293B",
+  },
+  titulo: {
     color: "#fff",
     fontSize: Math.max(width * 0.06, 16),
     fontFamily: "Inter_600SemiBold",
-    marginTop: width * 0.05,
+    
   },
-  email: {
-    color: "#fff",
-    opacity: 0.7,
-    fontFamily: "Inter_400Regular",
-    fontSize: Math.max(width * 0.03, 14),
-    marginTop: width * 0.01,
-  },
+ 
 });

@@ -13,7 +13,7 @@ const { width, height } = Dimensions.get("window");
 
 const TABS = [
   { name: "Home", route: "/(tabs)/home", icon: require("@assets/icons/home.png") },
-  { name: "Notes", route: "/(tabs)/notes", icon: require("@assets/icons/Frame.png") },
+  { name: "Notes", route: "/(tabs)/diario", icon: require("@assets/icons/Frame.png") },
   { name: "Brain", route: "/(tabs)/ia", icon: require("@assets/icons/logo.png") },
   { name: "Grid", route: "/(tabs)/dashboard", icon: require("@assets/icons/dashboard.png") },
   { name: "Profile", route: "/(tabs)/perfil", icon: require("@assets/icons/perfil.png") }, // Corrigi o ícone para seguir o padrão

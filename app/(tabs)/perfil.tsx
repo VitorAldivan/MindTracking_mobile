@@ -1,14 +1,14 @@
-import React, { useState } from "react";
+import { useRouter } from "expo-router";
+import React from "react";
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
   Dimensions,
   Image,
   Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useRouter } from "expo-router";
 import CardDenominado from "../components/cards/cardPerfil";
 
 const { width, height } = Dimensions.get("window");
@@ -55,10 +55,10 @@ export default function Perfil() {
       </View>
 
       <View style={styles.cardsContainer}>
-        <CardDenominado tipo="progresso" />
-        <CardDenominado tipo="alterarSenha" />
-        <CardDenominado tipo="editarPerfil" />
-        <CardDenominado tipo="sairDaConta" />
+        <CardDenominado tipo="progresso" onPress={() => router.push('/(tabs)/dashboard')} />
+        <CardDenominado tipo="alterarSenha" onPress={() => router.push('/auth/redefined')} />
+        <CardDenominado tipo="editarPerfil" onPress={() => router.push('/(tabs)/alterarfoto')} />
+        <CardDenominado tipo="sairDaConta" onPress={() => router.push('/auth/login')} />
       </View>
     </View>
   );

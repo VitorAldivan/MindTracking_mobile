@@ -262,3 +262,161 @@ export const InfoCard: React.FC<InfoCardProps> = ({ title, subtitle, icon, testI
     </View>
   );
 };
+
+// --- Novo card: AthenaCard ---
+type AthenaCardProps = {
+  title?: string;
+  description?: string;
+  conversations?: number;
+  onPress?: () => void;
+  testID?: string;
+};
+
+export const AthenaCard: React.FC<AthenaCardProps> = ({
+  title = 'Converse com a Athena',
+  description = '12 conversas até agora.',
+  conversations = 12,
+  onPress,
+  testID,
+}) => {
+  const { width, height } = useWindowDimensions();
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        card: {
+          width: '100%',
+          backgroundColor: '#1E293B',
+          borderRadius: w(6.93, width),
+          paddingHorizontal: w(4.66, width),
+          paddingVertical: h(3, height),
+          marginBottom: h(2, height),
+        },
+        row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+        title: {
+          color: '#fff',
+          fontFamily: 'Inter_600SemiBold',
+          fontSize: fs(18, width),
+        },
+        // Padroniza o ícone igual aos primeiros cards
+        icon: {
+          width: w(8.53, width), // ≈ 32px
+          height: w(8.53, width),
+          resizeMode: 'contain',
+          marginLeft: w(2, width),
+          tintColor: '#fff',
+        },
+        description: {
+          color: '#C9D3DC',
+          fontFamily: 'Inter_400Regular',
+          fontSize: fs(14, width),
+          marginTop: h(1.3, height),
+        },
+        button: {
+          marginTop: h(2, height),
+          backgroundColor: '#2563EB',
+          borderRadius: w(24, width),
+          alignSelf: 'flex-start',
+          paddingVertical: h(1.2, height),
+          paddingHorizontal: w(6, width),
+        },
+        buttonText: {
+          color: '#fff',
+          fontFamily: 'Inter_600SemiBold',
+          fontSize: fs(16, width),
+        },
+      }),
+    [width, height]
+  );
+
+  return (
+    <View style={styles.card} testID={testID}>
+      <View style={styles.row}>
+        <Text style={styles.title}>{title}</Text>
+        <Image source={require('@assets/icons/chat.png')} style={styles.icon} />
+      </View>
+      <Text style={styles.description}>{description}</Text>
+      <View style={styles.button}>
+        <Text style={styles.buttonText}>Comece Agora</Text>
+      </View>
+    </View>
+  );
+};
+
+// --- Novo card: ExportarJornadaCard ---
+type ExportarJornadaCardProps = {
+  title?: string;
+  description?: string;
+  onPress?: () => void;
+  testID?: string;
+};
+
+export const ExportarJornadaCard: React.FC<ExportarJornadaCardProps> = ({
+  title = 'Exportar Jornada',
+  description = 'Leve suas reflexões com você. Gere um arquivo PDF seguro para compartilhar com seu terapeuta ou guardar como um arquivo pessoal.',
+  onPress,
+  testID,
+}) => {
+  const { width, height } = useWindowDimensions();
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        card: {
+          width: '100%',
+          backgroundColor: '#1E293B',
+          borderRadius: w(6.93, width),
+          paddingHorizontal: w(4.66, width),
+          paddingVertical: h(3, height),
+        },
+        row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+        title: {
+          color: '#fff',
+          fontFamily: 'Inter_600SemiBold',
+          fontSize: fs(18, width),
+        },
+        // Padroniza o ícone igual aos primeiros cards
+        icon: {
+          width: w(8.53, width), // ≈ 32px
+          height: w(8.53, width),
+          resizeMode: 'contain',
+          marginLeft: w(2, width),
+          tintColor: '#fff',
+        },
+        description: {
+          color: '#C9D3DC',
+          fontFamily: 'Inter_400Regular',
+          fontSize: fs(14, width),
+          marginTop: h(1.3, height),
+        },
+        button: {
+          marginTop: h(2, height),
+          backgroundColor: '#2563EB',
+          borderRadius: w(24, width),
+          alignSelf: 'flex-start',
+          paddingVertical: h(1.2, height),
+          paddingHorizontal: w(7, width),
+        },
+        buttonText: {
+          color: '#fff',
+          fontFamily: 'Inter_600SemiBold',
+          fontSize: fs(16, width),
+        },
+      }),
+    [width, height]
+  );
+
+  return (
+    <View style={styles.card} testID={testID}>
+      <View style={styles.row}>
+        <Text style={styles.title}>{title}</Text>
+        <Image source={require('@assets/icons/recomendacao.png')} style={styles.icon} />
+      </View>
+      <Text style={styles.description}>{description}</Text>
+      <View style={styles.button}>
+        <Text style={styles.buttonText}>Gerar Relatório em PDF</Text>
+      </View>
+    </View>
+  );
+};
+

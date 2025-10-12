@@ -1,89 +1,392 @@
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-    Dimensions,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  FlatList,
+  Image,
+  LayoutChangeEvent,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import CardDiario from "../components/cards/cardDiario";
 
 const { width, height } = Dimensions.get("window");
+
 const diariosFake = [
-  {
-    titulo: "Avanço no Projeto",
-    data: "08/10/2025 - 16:31",
-    texto: "Finalizei a integração entre React Native e backend simulando cards dinâmicos.",
-  },
-  {
-    titulo: "Reunião com equipe",
-    data: "07/10/2025 - 14:20",
-    texto: "Discutimos melhorias para o app e definimos próximos passos.",
-  },
-  {
-    titulo: "Estudo de UI/UX",
-    data: "06/10/2025 - 09:10",
-    texto: "Pesquisei tendências de design para melhorar a experiência do usuário.",
-  },
-  {
-    titulo: "Testes automatizados",
-    data: "05/10/2025 - 18:45",
-    texto: "Implementei testes unitários para garantir a qualidade do código.",
-  },
-  // Adicione mais simulações se quiser
+  { titulo: "Avanço no Projeto", data: "08/10/2025 - 16:31", texto: "Finalizei a integração entre React Native e backend simulando cards dinâmicos." },
+  { titulo: "Reunião com equipe", data: "07/10/2025 - 14:20", texto: "Discutimos melhorias para o app e definimos próximos passos." },
+  { titulo: "Estudo de UI/UX", data: "06/10/2025 - 09:10", texto: "Pesquisei tendências de design para melhorar a experiência do usuário." },
+  { titulo: "Testes automatizados", data: "05/10/2025 - 18:45", texto: "Implementei testes unitários para garantir a qualidade do código." },
+  { titulo: "Avanço no Projeto", data: "08/10/2025 - 16:31", texto: "Finalizei a integração entre React Native e backend simulando cards dinâmicos." },
+  { titulo: "Reunião com equipe", data: "07/10/2025 - 14:20", texto: "Discutimos melhorias para o app e definimos próximos passos." },
+  { titulo: "Estudo de UI/UX", data: "06/10/2025 - 09:10", texto: "Pesquisei tendências de design para melhorar a experiência do usuário." },
+  { titulo: "Testes automatizados", data: "05/10/2025 - 18:45", texto: "Implementei testes unitários para garantir a qualidade do código." },
+  { titulo: "Avanço no Projeto", data: "08/10/2025 - 16:31", texto: "Finalizei a integração entre React Native e backend simulando cards dinâmicos." },
 ];
+
+type DiarioItem = typeof diariosFake[number];
 
 export default function Diario() {
   const router = useRouter();
-  const [diarios, setDiarios] = useState<typeof diariosFake>([]);
+  const [diarios, setDiarios] = useState<DiarioItem[]>([]);
+  const [headerHeight, setHeaderHeight] = useState<number>(0);
+
+  // Estados de modais
+  const [modalAnaliseVisivel, setModalAnaliseVisivel] = useState(false);   // imagem 1
+  const [modalEscritaVisivel, setModalEscritaVisivel] = useState(false);   // imagem 2
+  const [modalRegistradoVisivel, setModalRegistradoVisivel] = useState(false); // imagem 3
+  const [modalParabensVisivel, setModalParabensVisivel] = useState(false); // imagem 4
+
+  // FAB
+  const [fabState, setFabState] = useState<"plus" | "done">("plus");
+
+  // Conteúdo
+  const [selectedDiario, setSelectedDiario] = useState<DiarioItem | null>(null);
+  const [textoDiario, setTextoDiario] = useState("");
 
   useEffect(() => {
-    setTimeout(() => {
-      setDiarios(diariosFake);
-    }, 700);
+    const t = setTimeout(() => setDiarios(diariosFake), 700);
+    return () => clearTimeout(t);
+  }, []);
+
+  const keyExtractor = useCallback((item: DiarioItem, index: number) => String(index), []);
+
+  const abrirModalAnalise = useCallback((item: DiarioItem) => {
+    setSelectedDiario(item);
+    setModalAnaliseVisivel(true);
+  }, []);
+
+  const renderItem = useCallback(({ item }: { item: DiarioItem }) => {
+    return (
+      <View style={styles.cardWrapper}>
+        <CardDiario
+          diario={item}
+          onAnalyze={() => abrirModalAnalise(item)}
+        />
+      </View>
+    );
+  }, [abrirModalAnalise]);
+
+  const ItemSeparator = useCallback(() => <View style={styles.gap} />, []);
+  const ListFooter = useCallback(() => <View style={styles.footerSpacer} />, []);
+
+  const onHeaderLayout = useCallback((e: LayoutChangeEvent) => {
+    const h = e.nativeEvent.layout.height;
+    setHeaderHeight(prev => (prev !== h ? h : prev));
+  }, []);
+
+  // Ação do FAB
+  const onPressFab = useCallback(() => {
+    if (fabState === "plus") {
+      // Abre o Modal 2 (Escrita no Diário)
+      setTextoDiario("");
+      setModalEscritaVisivel(true);
+    } else {
+      // fabState === 'done' → abre Modal 3
+      setModalRegistradoVisivel(true);
+    }
+  }, [fabState]);
+
+  // Salvar do Modal 2
+  const onSalvarReflexao = useCallback(() => {
+    // Fecha Modal 2 e abre Modal 4 de parabéns
+    setModalEscritaVisivel(false);
+    setModalParabensVisivel(true);
+    // Troca estado do FAB para 'done'
+    setFabState("done");
+  }, []);
+
+  // Fechar Modal 4 e voltar para a tela normal
+  const onFecharParabens = useCallback(() => {
+    setModalParabensVisivel(false);
+  }, []);
+
+  // Fechar Modal 3 (informativo de já registrado)
+  const onFecharRegistrado = useCallback(() => {
+    setModalRegistradoVisivel(false);
   }, []);
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: height * 0.1 }}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Image
-            source={require("../../assets/icons/seta.png")}
-            style={styles.seta}
-          />
-        </TouchableOpacity>
-        <View style={styles.textContainer}>
-          <Text style={styles.perfilText}>Meus Diários</Text>
+    <View style={styles.screen}>
+      {/* Header fixo */}
+      <View style={styles.fixedHeader} onLayout={onHeaderLayout}>
+        <View style={styles.headerRow}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Image
+              source={require("@assets/icons/seta.png")}
+              style={styles.seta}
+            />
+          </TouchableOpacity>
+
+          <View style={styles.textContainer}>
+            <Text style={styles.perfilText}>Meus Diários</Text>
+          </View>
+
+          <View style={{ width: width * 0.09 }} />
         </View>
-        <View style={{ width: width * 0.09 }} />
+
+        <Text style={styles.titleLarge}>
+          Seu refúgio de pensamentos seguros
+        </Text>
       </View>
 
-      <Text style={styles.titleLarge}>
-        Seu refúgio de pensamentos seguros
-      </Text>
+      {/* Lista */}
+      <FlatList
+        style={styles.list}
+        contentContainerStyle={[
+          styles.listContentBase,
+          { paddingTop: headerHeight },
+        ]}
+        data={diarios}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        ItemSeparatorComponent={ItemSeparator}
+        ListFooterComponent={ListFooter}
+        showsVerticalScrollIndicator={false}
+        removeClippedSubviews
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={7}
+      />
 
-      {diarios.map((diario, idx) => (
-        <CardDiario key={idx} diario={diario} />
-      ))}
-    </ScrollView>
+      {/* Modal 1 — Análise da Athena */}
+      <Modal
+        visible={modalAnaliseVisivel}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setModalAnaliseVisivel(false);
+          setSelectedDiario(null);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => {
+                setModalAnaliseVisivel(false);
+                setSelectedDiario(null);
+              }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              activeOpacity={0.8}
+            >
+              <Image
+                source={require("@assets/icons/x.png")}
+                style={styles.modalCloseIcon}
+              />
+            </TouchableOpacity>
+
+            <View style={styles.modalIconWrap}>
+              <Image
+                source={require("@assets/icons/logo.png")}
+                style={styles.modalIcon}
+              />
+            </View>
+
+            <Text style={styles.modalHeading}>
+              {selectedDiario?.titulo ?? "Análise"}
+            </Text>
+
+            <Text style={styles.modalLabel}>
+              Mensagem:
+              <Text style={styles.modalBody}>
+                {" "}{selectedDiario?.texto ?? ""}
+              </Text>
+            </Text>
+
+            <Text style={styles.modalLabel}>
+              Emoção predominante:
+              <Text style={styles.modalEmphasis}> Ansiedade</Text>
+            </Text>
+
+            <Text style={styles.modalQuoteLabel}>
+              Athena diz:
+              <Text style={styles.modalQuote}>
+                {" "}
+                “Você parece sobrecarregado. Respire fundo e tire um tempo para você.”
+              </Text>
+            </Text>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal 2 — Escrita no Diário */}
+      <Modal
+        visible={modalEscritaVisivel}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalEscritaVisivel(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setModalEscritaVisivel(false)}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              activeOpacity={0.8}
+            >
+              <Image
+                source={require("@assets/icons/x.png")}
+                style={styles.modalCloseIcon}
+              />
+            </TouchableOpacity>
+
+            <View style={styles.modalIconWrap}>
+              <Image
+                source={require("@assets/icons/logo.png")}
+                style={styles.modalIcon}
+              />
+            </View>
+
+            <Text style={styles.modalHeading}>Escrita no Diário</Text>
+            <Text style={styles.modalBodyMuted}>
+              Escreva livremente - somente você verá isso.
+            </Text>
+
+            {/* Caixa de texto com rolagem quando exceder o tamanho */}
+            <View style={styles.textAreaWrapper}>
+              <ScrollView
+                style={styles.textAreaScroll}
+                contentContainerStyle={{ paddingRight: 6 }}
+                keyboardShouldPersistTaps="handled"
+              >
+                <TextInput
+                  value={textoDiario}
+                  onChangeText={setTextoDiario}
+                  placeholder="Registre aqui seus pensamentos, sentimentos e aprendizados do dia..."
+                  placeholderTextColor="#9AA6B2"
+                  multiline
+                  style={styles.textArea}
+                />
+              </ScrollView>
+              {/* Balão/tooltip com imagem PNG de orientação (substituir o caminho pelo seu arquivo) */}
+              <Image
+                source={{ uri: "file:///SEU/CAMINHO/tooltip-diario.png" }}
+                style={styles.tooltipImg}
+              />
+            </View>
+
+            {/* Ações */}
+            <View style={styles.actionsRow}>
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.btnNeutral]}
+                onPress={() => setModalEscritaVisivel(false)}
+                activeOpacity={0.9}
+              >
+                <Text style={styles.btnNeutralText}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.btnPrimary]}
+                onPress={onSalvarReflexao}
+                activeOpacity={0.9}
+                disabled={textoDiario.trim().length === 0}
+              >
+                <Text style={styles.btnPrimaryText}>Salvar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal 4 — Parabéns (após salvar) */}
+      <Modal
+        visible={modalParabensVisivel}
+        transparent
+        animationType="fade"
+        onRequestClose={onFecharParabens}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { borderColor: "#15803D", borderWidth: 2.5 }]}>
+            <Text style={[styles.modalHeading, { textAlign: "left" }]}>Reflexão Salva!</Text>
+            <Text style={styles.modalBody}>
+              Parabéns por dedicar um momento para si. Cada registro é um passo importante na sua jornada de autoconhecimento.
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.singleActionBtn, styles.btnSuccess]}
+              onPress={onFecharParabens}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.btnSuccessText}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal 3 — Já registrado hoje */}
+      <Modal
+        visible={modalRegistradoVisivel}
+        transparent
+        animationType="fade"
+        onRequestClose={onFecharRegistrado}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { borderColor: "#15803D", borderWidth: 2.5 }]}>
+            <Text style={[styles.modalHeading, { textAlign: "left" }]}>
+              Sua reflexão de hoje já foi registrada.
+            </Text>
+            <Text style={styles.modalBody}>
+              Para incentivar um registro focado e significativo, nossa plataforma foi desenhada para um diário emocional por dia. Isso ajuda a consolidar os pensamentos e sentimentos mais importantes do seu dia.
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.singleActionBtn, styles.btnSuccess]}
+              onPress={onFecharRegistrado}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.btnSuccessText}>Entendido</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* FAB fixo */}
+      <View style={styles.fixedFabs} pointerEvents="box-none">
+        <TouchableOpacity onPress={onPressFab} activeOpacity={0.9}>
+          <Image
+            source={
+              fabState === "plus"
+                ? require("@assets/icons/Property 1=Diário não escrito.png")
+                : require("@assets/icons/Property 1=Diário já escrito.png")
+            }
+            style={styles.fabIcon}
+          />
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
     backgroundColor: "#0F172A",
+  },
+
+  fixedHeader: {
+    
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
     paddingHorizontal: width * 0.07,
     paddingTop: height * 0.06,
+    paddingBottom: height * 0.025,
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 10,
+    elevation: 6,
+    backgroundColor: "#0F172A"
   },
-  header: {
+  headerRow: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: height * 0.02,
@@ -110,6 +413,204 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: Math.max(width * 0.055, 18),
     fontFamily: "Inter_600SemiBold",
-    marginBottom: height * 0.025,
+  },
+
+  list: { flex: 1 },
+  listContentBase: {
+    paddingHorizontal: width * 0.07,
+    paddingBottom: height * 0.12,
+  },
+
+  cardWrapper: { width: "100%" },
+  gap: { height: height * 0.01 },
+  footerSpacer: { height: height * 0.025 },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: width * 0.02,
+  },
+  modalContent: {
+    backgroundColor: "#1E293B",
+    borderRadius: 16,
+    paddingTop: height * 0.03,
+    paddingBottom: height * 0.028,
+    paddingHorizontal: width * 0.06,
+    width: "90%",
+    borderWidth: 0,
+    shadowColor: "#000",
+    shadowOpacity: 0.18,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  modalCloseButton: {
+    position: "absolute",
+    top: height * 0.03,
+    right: height * 0.03,
+    width: Math.max(width * 0.03, 28),
+    height: Math.max(width * 0.03, 28),
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 999,
+  },
+  modalCloseIcon: {
+    width: Math.max(width * 0.09, 20),
+    height: Math.max(width * 0.09, 20),
+    resizeMode: "contain",
+    tintColor: "#FFFFFF",
+  },
+  modalIconWrap: {
+    width: "100%",
+    alignItems: "center",
+    marginBottom: height * 0.018,
+  },
+  modalIcon: {
+    width: Math.max(width * 0.13, 44),
+    height: Math.max(width * 0.13, 44),
+    resizeMode: "contain",
+    tintColor: "#fff",
+  },
+  modalHeading: {
+    color: "#FFFFFF",
+    textAlign: "center",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: Math.max(width * 0.065, 16),
+    marginBottom: height * 0.018,
+  },
+  modalLabel: {
+    color: "#fff",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: Math.max(width * 0.038, 14),
+    marginBottom: height * 0.008,
+  },
+  modalBody: {
+    color: "#fff",
+    fontFamily: "Inter_500Medium",
+    fontSize: Math.max(width * 0.038, 14),
+    lineHeight: Math.max(height * 0.028, 20),
+    marginTop: height * 0.01,
+  },
+  modalEmphasis: {
+    color: "#FFFFFF",
+    fontFamily: "Inter_700Bold",
+    fontSize: Math.max(width * 0.038, 14),
+  },
+  modalQuoteLabel: {
+    color: "#3B81F5",
+    fontFamily: "Inter_700Bold",
+    fontSize: Math.max(width * 0.038, 14),
+    marginTop: height * 0.016,
+    marginBottom: height * 0.006,
+  },
+  modalQuote: {
+    color: "#3B81F5",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: Math.max(width * 0.04, 15),
+    lineHeight: Math.max(height * 0.03, 22),
+  },
+
+  // Modal 2 específicos
+  modalBodyMuted: {
+    color: 'rgba(255, 255, 255, 0.50)',
+    fontFamily: "Inter_400Regular",
+    fontSize: Math.max(width * 0.0342, 13),
+    marginBottom: height * 0.02,
+    textAlign: "left",
+  },
+  textAreaWrapper: {
+    borderWidth: 2.5,
+    borderColor: "#2563EA",
+    backgroundColor: "#1E293B",
+    borderRadius: 12,
+    padding: 10,
+    minHeight: height * 0.2,
+    maxHeight: height * 0.32,
+    marginBottom: height * 0.016,
+    position: "relative",
+  },
+  textAreaScroll: {
+    maxHeight: height * 0.28,
+  },
+  textArea: {
+    color: "#FFFFFF",
+    fontFamily: "Inter_400Regular",
+    fontSize: Math.max(width * 0.038, 14),
+    lineHeight: Math.max(height * 0.028, 20),
+    minHeight: height * 0.18,
+    textAlignVertical: "top",
+  },
+  tooltipImg: {
+    position: "absolute",
+    right: -width * 0.02,
+    top: height * 0.02,
+    width: width * 0.38,
+    height: width * 0.22,
+    resizeMode: "contain",
+    opacity: 0.9,
+  },
+  actionsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: width * 0.04,
+  },
+  actionBtn: {
+    flex: 1,
+    paddingVertical: height * 0.008,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: height * 0.01,
+  },
+  btnNeutral: {
+    backgroundColor: "#1E293B",
+    borderWidth: 1,
+    borderColor: "#405A7B",
+  },
+  btnNeutralText: {
+    color: "#fff",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: Math.max(width * 0.042, 15),
+  },
+  btnPrimary: {
+    backgroundColor: "#2563EB",
+  },
+  btnPrimaryText: {
+    color: "#FFFFFF",
+    fontFamily: "Inter_700Bold",
+    fontSize: Math.max(width * 0.042, 15),
+  },
+
+  // Modais 3 e 4 — botões únicos
+  singleActionBtn: {
+    marginTop: height * 0.03,
+    paddingVertical: height * 0.008,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  btnSuccess: {
+    backgroundColor: "#15803D",
+  },
+  btnSuccessText: {
+    color: "#fff",
+    fontFamily: "Inter_700Bold",
+    fontSize: Math.max(width * 0.042, 15),
+  },
+
+  // FAB
+  fixedFabs: {
+    position: "absolute",
+    right: width * 0.06,
+    bottom: height * 0.15,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  fabIcon: {
+    width: width * 0.14,
+    height: width * 0.14,
+    resizeMode: "contain",
   },
 });

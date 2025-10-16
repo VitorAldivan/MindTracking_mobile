@@ -1,8 +1,9 @@
-import { useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
-import { Dimensions, Image, LayoutChangeEvent, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { AthenaCard, CorrelationsCard, ExportarJornadaCard, InfoCard, StatCard } from "../components/cards/cardDashboard1";
-//import { WellbeingChart } from "../components/cards/grafico";
+
+import React from "react";
+import { Dimensions, ScrollView, StyleSheet, View } from "react-native";
+import { CorrelationsCard, InfoCard, StatCard, AthenaCard, ExportarJornadaCard   } from "../components/cards/cardDashboard1";
+import { GraficoCard } from "../components/cards/grafico";
+
 
 
 const { width, height } = Dimensions.get("window");
@@ -70,11 +71,23 @@ export default function Dashboard() {
             { icon: require('@assets/icons/apoio.png'), color: '#E11D48', text: 'Menos ansiedade após 3 dias de diário' },
           ]}
         />
+
+        <GraficoCard 
+            data={[6, 3, 5, 7, 2, 10, 9]}
+            color="#38BDF8"
+            title="Seu Bem-Estar Esta Semana"
+            title2="Média: 6.8  | Melhor dia: 8.0 (qui)"
+            xLabels={[
+            "10/07", "11/07", "12/07", "13/07", "14/07", "15/07", "16/07"
+            ]}
+        />
+
+
         <AthenaCard
-  title="Converse com a Athena"
-  description="12 conversas até agora."
-  onPress={() => {/* ação ao clicar, se desejar */}}
-  testID="athena-card"
+          title="Converse com a Athena"
+          description="12 conversas até agora."
+          onPress={() => {/* ação ao clicar, se desejar */}}
+          testID="athena-card"
   // O ícone já está fixo no componente (chat.png) pelo exemplo anterior.
  />
 
@@ -86,20 +99,6 @@ export default function Dashboard() {
   // O ícone já está fixo no componente (lightbulb.png) pelo exemplo anterior.
  />
         
-
-        {/* <WellbeingChart
-          data={[
-            { xLabel: '10/07', value: 8 },
-            { xLabel: '11/07', value: 9 },
-            { xLabel: '12/07', value: 6 },
-            { xLabel: '13/07', value: 7 },
-            { xLabel: '14/07', value: 8 },
-            { xLabel: '15/07', value: 6 },
-            { xLabel: '16/07', value: 10 },
-          ]}
-          avgLabel="Média: 6.8"
-          bestLabel="Melhor dia: 8.0 (qui)"
-        /> */}
       </ScrollView>
     </View>
   );

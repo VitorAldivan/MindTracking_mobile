@@ -1,11 +1,15 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { ActivityIndicator, Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Dimensions, Image, StyleSheet, Text, TouchableOpacity, View, Alert } from "react-native";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import ButtonBase from "../components/common/button/button";
 import ButtonBase2 from "../components/common/button/button2";
 import InputBase from "../components/common/input/inputBase";
 
 const { width, height } = Dimensions.get("window");
+
+const API_BASE_URL = "http://44.220.11.145";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -13,19 +17,36 @@ export default function LoginScreen() {
   const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    router.push("/(tabs)/home");
+  const handleLogin = async () => {
+    if (!email || !senha) {
+      Alert.alert("Erro", "Por favor, preencha email e senha.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+        email,
+        senha,
+      });
+
+      if (response.data && response.data.token) {
+        await AsyncStorage.setItem("token", response.data.token);
+        router.push("/(tabs)/home");
+      } else {
+        Alert.alert("Erro", "Resposta inesperada do servidor.");
+      }
+    } catch (error: any) {
+      console.log(error.response?.data || error.message);
+      Alert.alert("Erro", error.response?.data?.message || "Erro ao fazer login");
+    }
+    setLoading(false);
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.topo}>
-        <Image
-          source={require("../../assets/icons/logo.png")} 
-          style={styles.logo}
-          resizeMode="contain"
-        />
-
+        <Image source={require("../../assets/icons/logo.png")} style={styles.logo} resizeMode="contain" />
         <View style={styles.titulos}>
           <Text style={styles.title}>Bem-vindo de volta!</Text>
           <Text style={styles.subtitle}>Mantenha sua mente nos conformes</Text>
@@ -40,9 +61,9 @@ export default function LoginScreen() {
         autoCapitalize="none"
         keyboardType="email-address"
       />
-      <InputBase 
-        iconLeft="senha" 
-        placeholder="Senha" 
+      <InputBase
+        iconLeft="senha"
+        placeholder="Senha"
         eyeOpenIcon={require("@assets/icons/eye.png")}
         eyeClosedIcon={require("@assets/icons/eye-off.png")}
         value={senha}
@@ -55,10 +76,7 @@ export default function LoginScreen() {
       </TouchableOpacity>
 
       <View style={styles.botoes}>
-        <ButtonBase
-          title={loading ? "Entrando..." : "Fazer login"}
-          onPress={handleLogin}
-        />
+        <ButtonBase title={loading ? "Entrando..." : "Fazer login"} onPress={handleLogin} disabled={loading} />
 
         <View style={styles.divider}>
           <View style={styles.line} />
@@ -66,10 +84,7 @@ export default function LoginScreen() {
           <View style={styles.line} />
         </View>
 
-        <ButtonBase2
-          title="Ainda não tem uma conta?"
-          onPress={() => router.push("/auth/registro1")}
-        />
+        <ButtonBase2 title="Ainda não tem uma conta?" onPress={() => router.push("/auth/registro1")} />
       </View>
 
       {loading && (
@@ -84,19 +99,19 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0F172A", 
-    paddingHorizontal: width * 0.08, 
-    paddingVertical: height * 0.06, 
+    backgroundColor: "#0F172A",
+    paddingHorizontal: width * 0.08,
+    paddingVertical: height * 0.06,
     justifyContent: "center",
-    paddingBottom: 70, // espaço extra p/ navbar não sobrepor botões
+    paddingBottom: 70,
   },
   logo: {
-    width: width * 0.22, 
-    height: height * 0.08, 
+    width: width * 0.22,
+    height: height * 0.08,
     marginTop: 0,
   },
   topo: {
-    gap: height * 0.07, 
+    gap: height * 0.07,
     marginBottom: height * 0.02,
   },
   titulos: {
@@ -114,7 +129,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
   },
   subtitle: {
-    fontSize: width * 0.04, 
+    fontSize: width * 0.04,
     color: "#ffffffff",
     textAlign: "center",
     marginBottom: height * 0.03,
@@ -122,7 +137,7 @@ const styles = StyleSheet.create({
   },
   forgotText: {
     color: "#ffffffff",
-    fontSize: width * 0.033, 
+    fontSize: width * 0.033,
     fontFamily: "Inter_700Bold",
     textAlign: "right",
     marginTop: height * 0.015,

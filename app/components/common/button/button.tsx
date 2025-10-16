@@ -1,12 +1,13 @@
-import { Pressable, Text, StyleSheet, Animated } from "react-native";
 import { useRef } from "react";
+import { Animated, Pressable, StyleSheet, Text } from "react-native";
 
 type Props = {
   title: string;
-  onPress: () => void;
+  onPress: () => void | Promise<void>;
+  disabled?: boolean;
 };
 
-export default function ButtonBase({ title, onPress }: Props) {
+export default function ButtonBase({ title, onPress, disabled = false }: Props) {
   const anim = useRef(new Animated.Value(0)).current;
 
   const handlePressIn = () => {
@@ -22,7 +23,9 @@ export default function ButtonBase({ title, onPress }: Props) {
       toValue: 0,
       duration: 100,
       useNativeDriver: false,
-    }).start(() => onPress());
+    }).start(() => {
+      if (!disabled) onPress();
+    });
   };
 
   const bgColor = anim.interpolate({
@@ -40,8 +43,14 @@ export default function ButtonBase({ title, onPress }: Props) {
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       style={{ width: "100%" }}
+      disabled={disabled}
     >
-      <Animated.View style={[styles.button, { backgroundColor: bgColor, borderColor }]}>
+      <Animated.View
+        style={[
+          styles.button,
+          { backgroundColor: disabled ? "#374151" : (bgColor as any), borderColor: disabled ? "transparent" : (borderColor as any), opacity: disabled ? 0.7 : 1 },
+        ]}
+      >
         <Text style={styles.text}>{title}</Text>
       </Animated.View>
     </Pressable>

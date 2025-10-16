@@ -5,23 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5dc65422-c523-4db1-8e78-65da04a7df45" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/eas.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(tabs)/dashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/dashboard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(tabs)/diario.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/diario.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(tabs)/perfil.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/perfil.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/carrosel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/carrosel.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/app.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/auth/login.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/login.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/redefined.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/redefined.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/registro1.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/registro1.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/auth/registro2.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/registro2.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/components/common/button/button.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/components/common/button/button.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/components/common/input/inputBase.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/components/common/input/inputBase.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/components/common/input/inputData.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/components/common/input/inputData.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/components/common/input/inputGenero.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/components/common/input/inputGenero.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/components/common/input/inputPhone.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/components/common/input/inputPhone.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

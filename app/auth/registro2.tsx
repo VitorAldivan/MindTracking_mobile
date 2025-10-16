@@ -1,13 +1,15 @@
 import { View, Text, StyleSheet, Image, Dimensions, Alert } from "react-native";
 import InputBase from "../components/common/input/inputBase";
 import BirthDateInput from "../components/common/input/inputData";
+import InputGender from "../components/common/input/inputGenero";
+import PhoneInput from "../components/common/input/inputPhone";
 import ButtonBase from "../components/common/button/button";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import axios from "axios";
 
 const { width, height } = Dimensions.get("window");
-const API_BASE_URL = "https://mindtracking-api.onrender.com";
+const API_BASE_URL = "http://44.220.11.145";
 
 function formatDateToIso(date: string) {
   if (!date) return "";
@@ -25,11 +27,13 @@ export default function RegisterScreen2() {
 
   const [nome, setNome] = useState("");
   const [dataNascimento, setDataNascimento] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [genero, setGenero] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleNext = async () => {
-    if (!nome || !dataNascimento) {
+    if (!nome || !dataNascimento || !telefone || !genero) {
       setError("Preencha todos os campos.");
       return;
     }
@@ -40,20 +44,22 @@ export default function RegisterScreen2() {
 
     // Ajusta os nomes dos parâmetros para evitar erros
     const senha = params.senha || params.password || "";
-const confirmarSenha = params.confirmarSenha || params.confirmPassword || "";
-const email = params.email || "";
+    const confirmarSenha = params.confirmarSenha || params.confirmPassword || "";
+    const email = params.email || "";
 
-if (!senha || !confirmarSenha || !email) {
-  setError("Campos de senha e email obrigatórios estão faltando.");
-  setLoading(false);
-  return;
-}
+    if (!senha || !confirmarSenha || !email) {
+      setError("Campos de senha e email obrigatórios estão faltando.");
+      setLoading(false);
+      return;
+    }
     console.log("Enviando dados para registro:", {
       nome,
       email: params.email,
       senha,
       confirmarSenha,
       data_nascimento: dataNascIso,
+      telefone,
+      genero,
     });
 
     try {
@@ -63,6 +69,8 @@ if (!senha || !confirmarSenha || !email) {
         senha,
         confirmarSenha,
         data_nascimento: dataNascIso,
+        telefone,
+        genero,
       });
 
       console.log("Resposta registro:", response.data);
@@ -94,6 +102,8 @@ if (!senha || !confirmarSenha || !email) {
       <View style={styles.inputs}>
         <InputBase placeholder="Digite seu nome" iconLeft="user" value={nome} onChangeText={setNome} />
         <BirthDateInput value={dataNascimento} onChange={setDataNascimento} />
+        <PhoneInput value={telefone} onChange={setTelefone} />
+        <InputGender value={genero} onChange={setGenero} />
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
       </View>
 

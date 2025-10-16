@@ -9,7 +9,7 @@ import InputBase from "../components/common/input/inputBase";
 
 const { width, height } = Dimensions.get("window");
 
-const API_BASE_URL = "https://mindtracking-api.onrender.com";
+const API_BASE_URL = "http://44.220.11.145";
 
 export default function LoginScreen() {
   const router = useRouter();

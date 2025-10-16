@@ -43,12 +43,15 @@ export default function Dashboard() {
         />
 
         <GraficoCard 
-        data={[200, 100, 400, 500, 600, 700, 1000, 100]} // exemplo de array de números
-        color="#38BDF8" // adicione os outros props obrigatórios
-        title="Seu Bem-Estar Esta Semana"
-        title2="Média: 6.8  | Melhor dia: 8.0 (qui)"
-        subtitle=""
+            data={[6, 3, 5, 7, 2, 10, 9]}
+            color="#38BDF8"
+            title="Seu Bem-Estar Esta Semana"
+            title2="Média: 6.8  | Melhor dia: 8.0 (qui)"
+            xLabels={[
+            "10/07", "11/07", "12/07", "13/07", "14/07", "15/07", "16/07"
+            ]}
         />
+
 
         <AthenaCard
           title="Converse com a Athena"

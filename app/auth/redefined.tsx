@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { Dimensions, StyleSheet, Text, View } from "react-native";
+import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ButtonBase from "../components/common/button/button";
 import InputBase from "../components/common/input/inputBase"; // seu input já pronto
 // Pega altura e largura da tela
@@ -10,6 +10,20 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
+              <View style={styles.headerRow}>
+                <TouchableOpacity onPress={() => router.back()}>
+                  <Image
+                    source={require('@assets/icons/seta.png')}
+                    style={styles.seta}
+                  />
+                </TouchableOpacity>
+      
+                <View style={styles.textContainer}>
+                  <Text style={styles.perfilText}>Dashboard</Text>
+                </View>
+      
+                <View style={{ width: width * 0.09 }} />
+              </View>
       <View style={styles.topo}>
         
 
@@ -112,5 +126,29 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "500",
     fontSize: width * 0.04,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: height * 0.02,
+    top: -height * 0.17,
+  },
+  seta: {
+    width: width * 0.09,
+    height: width * 0.08,
+    top: height * 0.01,
+    tintColor: "#fff",
+    resizeMode: "contain",
+    marginBottom: height * 0.025,
+    transform: [{ rotate: "90deg" }],
+  },
+  textContainer: {
+    flex: 1,
+    alignItems: "center",
+  },
+  perfilText: {
+    color: "#fff",
+    fontSize: Math.max(width * 0.05, 14),
+    fontFamily: "Inter_600SemiBold",
   },
 });

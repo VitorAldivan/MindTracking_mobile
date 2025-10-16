@@ -1,8 +1,8 @@
-import React, { useRef } from "react";
-import { View, Text, Image, StyleSheet, TouchableOpacity, Animated, Dimensions } from "react-native";
-import Swiper from "react-native-swiper";
 import { useRouter } from "expo-router";
-import { Background } from "@react-navigation/elements";
+import React, { useRef } from "react";
+import { Animated, Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Swiper from "react-native-swiper";
 
 const { width, height } = Dimensions.get("window");
 
@@ -16,6 +16,7 @@ const Carousel = () => {
   const animatedValue = useRef(new Animated.Value(0)).current;
   const swiperRef = useRef<any>(null);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const goNext = () => swiperRef.current.scrollBy(1);
   const goBack = () => swiperRef.current.scrollBy(-1);
@@ -51,7 +52,7 @@ const Carousel = () => {
                 <Animated.Text style={[styles.title, { opacity }]}>{slide.title}</Animated.Text>
                 <Animated.Text style={[styles.text, { opacity }]}>{slide.text}</Animated.Text>
 
-                <View style={styles.buttonContainer}>
+                <View style={[styles.buttonContainer, { bottom: height * 0.04 + insets.bottom }] }>
                   {index !== 0 ? (
                     <TouchableOpacity style={styles.button} onPress={goBack}>
                       <Text style={styles.buttonText}>Voltar</Text>

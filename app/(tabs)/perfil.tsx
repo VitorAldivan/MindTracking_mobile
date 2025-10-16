@@ -21,7 +21,7 @@ export default function Perfil() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.push('/(tabs)/home')}>
           <Image
             source={require("../../assets/icons/seta.png")}
             style={styles.seta}

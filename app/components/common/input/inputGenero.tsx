@@ -1,20 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Easing,
-  FlatList,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    Easing,
+    FlatList,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 const GENDERS = ["Masculino", "Feminino", "Outro"];
 
-export default function InputGender() {
+type Props = {
+  value?: string;
+  onChange?: (v: string) => void;
+};
+
+export default function InputGender({ value, onChange }: Props) {
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState("");
+  const [selected, setSelected] = useState(value ?? "");
 
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
@@ -37,7 +42,8 @@ export default function InputGender() {
   });
 
   const handleSelect = (gender: string) => {
-    setSelected(gender);
+    if (onChange) onChange(gender);
+    else setSelected(gender);
     setOpen(false);
   };
 
@@ -55,8 +61,8 @@ export default function InputGender() {
           resizeMode="contain"
         />
 
-        <Text style={[styles.inputText, !selected && { color: "#fff" }]}>
-          {selected || "Selecione o gênero"}
+        <Text style={[styles.inputText, !selected && { color: "#fff" }]}> 
+          {selected || value || "Selecione o gênero"}
         </Text>
 
         <Animated.View

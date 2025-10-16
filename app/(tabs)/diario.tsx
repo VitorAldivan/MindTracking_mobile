@@ -116,7 +116,7 @@ export default function Diario() {
       {/* Header fixo */}
       <View style={styles.fixedHeader} onLayout={onHeaderLayout}>
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/home')}>
             <Image
               source={require("@assets/icons/seta.png")}
               style={styles.seta}

@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import {
-  View,
+  Image,
+  StyleSheet,
   TextInput,
   TextInputProps,
-  StyleSheet,
-  Image,
   TouchableOpacity,
+  View,
 } from "react-native";
 
 interface InputBaseProps extends TextInputProps {
@@ -19,6 +19,7 @@ export default function InputBase({
   placeholder,
   eyeOpenIcon,
   eyeClosedIcon,
+  secureTextEntry: parentSecure,
   ...rest
 }: InputBaseProps) {
   const [showPassword, setShowPassword] = useState(false);
@@ -52,8 +53,9 @@ export default function InputBase({
         placeholder={placeholder}
         placeholderTextColor="#fff"
         style={styles.input}
-        secureTextEntry={iconLeft === "senha" && !showPassword} 
         {...rest}
+        // Respect showPassword toggle for password fields; otherwise fall back to parent's prop
+        secureTextEntry={iconLeft === "senha" ? !showPassword : parentSecure}
       />
 
       {iconLeft === "senha" && (

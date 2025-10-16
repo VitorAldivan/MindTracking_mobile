@@ -1,15 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import InputBase from "./inputBase";
 
-export default function PhoneInput() {
-  const [phone, setPhone] = useState("");
+type Props = {
+  value?: string;
+  onChange?: (v: string) => void;
+};
 
-  
-  const formatPhone = (value: string) => {
-    const digits = value.replace(/\D/g, "");
-     if (digits.length === 0) {
-    return ""; 
-  }
+export default function PhoneInput({ value, onChange }: Props) {
+  const [phone, setPhone] = useState(value ?? "");
+
+  useEffect(() => {
+    if (typeof value === "string" && value !== phone) setPhone(value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  const formatPhone = (val: string) => {
+    const digits = val.replace(/\D/g, "");
+    if (digits.length === 0) return "";
 
     if (digits.length <= 2) {
       return `(${digits}`;
@@ -23,8 +30,10 @@ export default function PhoneInput() {
   };
 
   const handleChange = (text: string) => {
-    const cleaned = text.replace(/[^\d]/g, ""); 
-    setPhone(formatPhone(cleaned));
+    const cleaned = text.replace(/[^\d]/g, "");
+    const formatted = formatPhone(cleaned);
+    if (onChange) onChange(formatted);
+    else setPhone(formatted);
   };
 
   return (
@@ -32,9 +41,9 @@ export default function PhoneInput() {
       placeholder="Telefone"
       keyboardType="phone-pad"
       inputMode="numeric"
-      value={phone}
+      value={value ?? phone}
       onChangeText={handleChange}
-      iconLeft="telefone" 
+      iconLeft="telefone"
       maxLength={15}
     />
   );

@@ -20,16 +20,6 @@ export default function LoginScreen() {
 
   const API_BASE_URL = "http://44.220.11.145";
 
-  const isAlreadyVerifiedMsg = (txt?: string) => {
-    const m = String(txt || "").toLowerCase();
-    // detect Portuguese/English variations like "já foi verificado", "ja verificado", "already verified"
-    return (
-      (m.includes("verific") && (m.includes("já") || m.includes("ja") || m.includes("foi") || m.includes("anterior"))) ||
-      m.includes("already verified") ||
-      m.includes("already been verified")
-    );
-  };
-
   const handleVerify = async () => {
     const email = String(params.email || (await AsyncStorage.getItem("email")) || "");
     const codigo = code.join("").trim();
@@ -40,7 +30,7 @@ export default function LoginScreen() {
     setError("");
     setLoading(true);
     try {
-      const resp = await axios.post(`${API_BASE_URL}/auth/verify-email`, { email, codigo }, { headers: { "Content-Type": "application/json" }, timeout: 10000 });
+      const resp = await axios.post(`${API_BASE_URL}/auth/verificar-codigo`, { email, codigo }, { headers: { "Content-Type": "application/json" }, timeout: 10000 });
       console.log("verify resp:", resp.status, resp.data);
       if (resp.data && resp.data.success) {
         // optional: save token if returned
@@ -66,7 +56,7 @@ export default function LoginScreen() {
         // If the user is in a recovery/change flow, treat a 'already verified' message as proceedable to password reset.
         const msg = String(resp.data?.message || "");
         const from = String(params.from || "register");
-        const alreadyVerified = isAlreadyVerifiedMsg(msg);
+        const alreadyVerified = /já verificado|ja verificado|already verified/i.test(msg);
         if ((from === "recover" || from === "change") && alreadyVerified) {
           if (from === "recover") {
             router.push({ pathname: "/auth/redefined2", params: { email: String(email), from: "recover" } });
@@ -82,7 +72,7 @@ export default function LoginScreen() {
       // If backend returns an error indicating 'already verified', and this is change/recover flow, allow proceeding
       const from = String(params.from || "register");
       const errMsg = err?.response?.data?.message || err.message || "Erro ao verificar código";
-      const alreadyVerified = isAlreadyVerifiedMsg(String(errMsg));
+      const alreadyVerified = /já verificado|ja verificado|already verified/i.test(String(errMsg));
       if ((from === "recover" || from === "change") && alreadyVerified) {
         if (from === "recover") {
           router.push({ pathname: "/auth/redefined2", params: { email: String(email), from: "recover" } });

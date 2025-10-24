@@ -127,7 +127,7 @@ export default function Perfil() {
 
       <View style={styles.cardsContainer}>
         <CardDenominado tipo="progresso" onPress={() => router.push('/(tabs)/dashboard')} />
-        <CardDenominado tipo="alterarSenha" onPress={() => router.push('/auth/redefined')} />
+  <CardDenominado tipo="alterarSenha" onPress={() => router.push({ pathname: '/auth/verify-code', params: { from: 'change' } })} />
         <CardDenominado tipo="editarPerfil" onPress={() => router.push('/(tabs)/alterarfoto')} />
         <CardDenominado
           tipo="sairDaConta"

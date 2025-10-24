@@ -139,7 +139,7 @@ export default function LoginScreen() {
         secureTextEntry
       />
 
-      <TouchableOpacity onPress={() => router.push("/auth/redefined")}>
+      <TouchableOpacity onPress={() => router.push("/auth/redefined1")}>
         <Text style={styles.forgotText}>Esqueceu sua senha?</Text>
       </TouchableOpacity>
 

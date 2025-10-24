@@ -1,5 +1,6 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -17,6 +18,28 @@ const EDIT_SIZE = AVATAR_SIZE * 0.24; // Proporcional ao avatar
 
 export default function Perfil() {
   const router = useRouter();
+  const [email, setEmail] = useState<string | null>(null);
+  const [nome, setNome] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadProfile() {
+      try {
+        const e = await AsyncStorage.getItem("email");
+        const n = await AsyncStorage.getItem("nome");
+        if (mounted) {
+          setEmail(e);
+          setNome(n);
+        }
+      } catch (err) {
+        // ignore
+      }
+    }
+    loadProfile();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -50,15 +73,27 @@ export default function Perfil() {
             </View>
           </Pressable>
         </View>
-        <Text style={styles.name}>João</Text>
-        <Text style={styles.email}>joaoHEnriq.mtins@gmail.com</Text>
+  <Text style={styles.name}>{nome ?? ""}</Text>
+  <Text style={styles.email}>{email ?? ""}</Text>
       </View>
 
       <View style={styles.cardsContainer}>
         <CardDenominado tipo="progresso" onPress={() => router.push('/(tabs)/dashboard')} />
         <CardDenominado tipo="alterarSenha" onPress={() => router.push('/auth/redefined')} />
         <CardDenominado tipo="editarPerfil" onPress={() => router.push('/(tabs)/alterarfoto')} />
-        <CardDenominado tipo="sairDaConta" onPress={() => router.push('/auth/login')} />
+        <CardDenominado
+          tipo="sairDaConta"
+          onPress={async () => {
+            await AsyncStorage.removeItem("token");
+            try {
+              await AsyncStorage.removeItem("email");
+              await AsyncStorage.removeItem("nome");
+            } catch (e) {
+              // ignore
+            }
+            router.replace("/auth/login");
+          }}
+        />
       </View>
     </View>
   );

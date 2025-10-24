@@ -1,12 +1,13 @@
-import { View, Text, StyleSheet, Image, Dimensions, Alert } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
+import { Alert, Dimensions, Image, StyleSheet, Text, View } from "react-native";
+import ButtonBase from "../components/common/button/button";
 import InputBase from "../components/common/input/inputBase";
 import BirthDateInput from "../components/common/input/inputData";
 import InputGender from "../components/common/input/inputGenero";
 import PhoneInput from "../components/common/input/inputPhone";
-import ButtonBase from "../components/common/button/button";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
-import axios from "axios";
 
 const { width, height } = Dimensions.get("window");
 const API_BASE_URL = "http://44.220.11.145";
@@ -40,7 +41,7 @@ export default function RegisterScreen2() {
     setError("");
     setLoading(true);
 
-    const dataNascIso = formatDateToIso(dataNascimento);
+  const dataNascIso = formatDateToIso(dataNascimento);
 
     // Ajusta os nomes dos parâmetros para evitar erros
     const senha = params.senha || params.password || "";
@@ -52,38 +53,78 @@ export default function RegisterScreen2() {
       setLoading(false);
       return;
     }
+    // sanitize / trim inputs
+    const nomeTrim = nome.trim();
+  const generoTrim = genero.trim();
+  // map frontend labels to backend expected values
+  let generoMapped = generoTrim;
+  const g = generoTrim.toLowerCase();
+  if (g === "masculino") generoMapped = "homem";
+  else if (g === "feminino") generoMapped = "mulher";
+  else if (g === "outro") generoMapped = "outro";
+    const telefoneSanitized = telefone.replace(/[^0-9+]/g, "").trim();
+
     console.log("Enviando dados para registro:", {
-      nome,
-      email: params.email,
+      nome: nomeTrim,
+      email: String(params.email).trim(),
       senha,
       confirmarSenha,
       data_nascimento: dataNascIso,
-      telefone,
-      genero,
+      telefone: telefoneSanitized,
+      genero: generoMapped,
     });
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/register`, {
-        nome,
-        email: params.email,
-        senha,
-        confirmarSenha,
-        data_nascimento: dataNascIso,
-        telefone,
-        genero,
-      });
+        const payload = {
+          nome: nomeTrim,
+          email: String(params.email).trim(),
+          senha,
+          confirmarSenha,
+          data_nascimento: dataNascIso,
+          genero: generoMapped,
+          telefone: telefoneSanitized,
+        };
 
-      console.log("Resposta registro:", response.data);
+        console.log("Payload enviado para registro:", JSON.stringify(payload, null, 2));
 
-      if (response.data && response.data.success) {
-        Alert.alert("Sucesso", "Registro realizado com sucesso!");
-        router.push("/auth/confirm-code");
-      } else {
-        setError(response.data.message || "Erro ao salvar perfil");
-      }
+        const response = await axios.post(`${API_BASE_URL}/auth/register`, payload, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          timeout: 15000,
+        });
+
+        console.log("Resposta registro status:", response.status);
+        console.log("Resposta registro headers:", response.headers);
+        console.log("Resposta registro data:", response.data);
+
+        if (response.data && response.data.success) {
+          // salvar nome e email no AsyncStorage e marcar questionario pendente
+          try {
+            await AsyncStorage.setItem("email", String(params.email || ""));
+            await AsyncStorage.setItem("nome", String(nome || ""));
+            await AsyncStorage.setItem("questionario_pending", "true");
+            // se o backend retornou token já, salve para manter sessão
+            if (response.data.token) {
+              await AsyncStorage.setItem("token", String(response.data.token));
+            }
+          } catch (e) {
+            // ignore
+          }
+
+          Alert.alert("Sucesso", "Registro realizado com sucesso!");
+          // depois do registro, ir para verificação de email (confirm-code)
+          router.push({ pathname: "/auth/confirm-code", params: { email: String(params.email || "") } });
+        } else {
+          setError(response.data.message || "Erro ao salvar perfil");
+        }
     } catch (error: any) {
-      console.log("Erro no registro:", error, error?.response?.data);
-      setError(error.response?.data?.message || "Erro ao salvar perfil");
+      console.log("Erro no registro (erro):", error);
+      console.log("Erro no registro (response.status):", error?.response?.status);
+      console.log("Erro no registro (response.headers):", error?.response?.headers);
+      console.log("Erro no registro (response.data):", error?.response?.data);
+      // prefer server message when available
+      setError(error?.response?.data?.message || error?.message || "Erro ao salvar perfil");
     } finally {
       setLoading(false);
     }

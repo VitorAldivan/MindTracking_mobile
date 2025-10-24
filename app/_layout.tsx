@@ -1,5 +1,7 @@
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, useFonts } from "@expo-google-fonts/inter";
-import { Stack } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import BottomNavbar from "./components/navbar/navbar";
@@ -20,6 +22,77 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);
+
+  // Check token and redirect to tabs/home if present
+  const router = useRouter();
+  useEffect(() => {
+    async function checkToken() {
+      try {
+        // If questionnaire is pending, force questionario route regardless of token
+        try {
+          const pending = await AsyncStorage.getItem("questionario_pending");
+          if (pending === "true") {
+            router.replace("/auth/questionario");
+            return;
+          }
+        } catch (e) {
+          // ignore
+        }
+
+        const token = await AsyncStorage.getItem("token");
+        if (token) {
+          // Replace initial route with tabs/home
+          router.replace("/(tabs)/home");
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    if (fontsLoaded) checkToken();
+  }, [fontsLoaded, router]);
+
+  // Setup axios interceptors once: attach token to requests and handle 401 globally
+  useEffect(() => {
+    const reqId = axios.interceptors.request.use(
+      async (config) => {
+        try {
+          const token = await AsyncStorage.getItem("token");
+          if (token) {
+            (config.headers as any) = {
+              ...(config.headers || {}),
+              Authorization: `Bearer ${token}`,
+            };
+          }
+        } catch (e) {
+          // ignore
+        }
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
+
+    const resId = axios.interceptors.response.use(
+      (res) => res,
+      async (error) => {
+        try {
+          if (error?.response?.status === 401) {
+            await AsyncStorage.removeItem("token");
+            // redirect to login screen via router
+            router.replace("/auth/login");
+          }
+        } catch (e) {
+          // ignore
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.request.eject(reqId);
+      axios.interceptors.response.eject(resId);
+    };
+  }, []);
 
   if (!fontsLoaded) {
     return null; 

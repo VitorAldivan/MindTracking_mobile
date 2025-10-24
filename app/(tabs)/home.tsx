@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState , useCallback } from "react";
 import {
   Dimensions,
   Image,
@@ -11,15 +13,56 @@ import {
 } from "react-native";
 import FeatureCard from "../components/cards/card1";
 import InfoCard from "../components/cards/card2";
+import { useFocusEffect } from "expo-router";
+
 
 const { width, height } = Dimensions.get("window");
 
 export default function Dashboard() {
+  const router = useRouter();
   const [done, setDone] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
+  // on mount, read diario completion state and optional modal flag
+  
+
+// substitua o useEffect
+useFocusEffect(
+  useCallback(() => {
+    let active = true;
+    (async () => {
+      try {
+        const last = await AsyncStorage.getItem("diario_last_done");
+        const showFlag = await AsyncStorage.getItem("diario_show_modal");
+        const today = new Date().toISOString().slice(0, 10);
+
+        if (active) {
+          setDone(last === today);
+          if (showFlag === "true") {
+            setShowModal(true);
+            await AsyncStorage.removeItem("diario_show_modal");
+          }
+        }
+      } catch (e) {
+        console.log("Erro ao ler estado diário:", e);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [])
+);
+
+
   const handleCardPress = () => {
-    if (!done) setShowModal(true);
+    // if user hasn't done today's check-in, open the questionnaire in 'diario' mode
+    if (!done) {
+      router.push({ pathname: "/auth/questionario", params: { mode: "diario" } });
+      return;
+    }
+    // if already done, show info modal
+    setShowModal(true);
   };
 
   const handleConfirm = () => {

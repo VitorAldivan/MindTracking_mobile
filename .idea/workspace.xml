@@ -5,17 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5dc65422-c523-4db1-8e78-65da04a7df45" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/app/@types/index.d.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/components/cards/styles.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/icons/LegendNode.svg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/icons/bolinha2.svg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/metro.config.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.expo/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/.expo/settings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(tabs)/dashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/dashboard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/components/cards/grafico.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/components/cards/grafico.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/babel.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/babel.config.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,7 +37,7 @@
     "RunOnceActivity.readMode.enableVisualFormatting": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
-    "git-widget-placeholder": "Merging main",
+    "git-widget-placeholder": "2ff117f5",
     "last_opened_file_path": "C:/Users/SEDUC DEST2/MindTracking_mobile",
     "settings.editor.selected.configurable": "AndroidSdkUpdater"
   }

@@ -13,8 +13,7 @@ module.exports = function(api) {
           },
         },
       ],
-      // Remova 'react-native-worklets/plugin' se estiver usando Reanimated!
-      'react-native-reanimated/plugin', // sempre por último!
+      'react-native-worklets/plugin',
     ],
   };
 };

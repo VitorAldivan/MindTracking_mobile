@@ -1,10 +1,27 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 // Pega altura e largura da tela
 const { width, height } = Dimensions.get("window");
 
 export default function Welcome() {
   const router = useRouter();
+  const [nome, setNome] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      try {
+        const n = await AsyncStorage.getItem("nome");
+        if (mounted) setNome(n);
+      } catch (e) {}
+    }
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -16,7 +33,7 @@ export default function Welcome() {
         />
 
         <View style={styles.titulos}>
-          <Text style={styles.title}>Vamos começar, [Usuário]</Text>
+          <Text style={styles.title}>Vamos começar, {nome ?? ""}</Text>
           <Text style={styles.subtitle}>Para que Athena possa te conhecer melhor, vamos fazer algumas perguntas rápidas. Isso criará uma base para sua jornada de autoconhecimento.</Text>
         </View>
       </View>

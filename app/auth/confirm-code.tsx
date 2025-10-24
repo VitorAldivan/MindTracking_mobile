@@ -1,35 +1,50 @@
-import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions } from "react-native";
+import { Dimensions, Image, StyleSheet, Text, View } from "react-native";
 import Verification from "../components/common/input/inputCode";
 
-import ButtonBase from "../components/common/button/button";
-
-
-import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
+import ButtonBase from "../components/common/button/button";
 
 const { width, height } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const [code, setCode] = useState(["", "", "", ""]);
-
-  // estados da senha
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleNext = () => {
-    if (!password || !confirmPassword) {
-      setError("Preencha todos os campos.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("As senhas não coincidem.");
+  const API_BASE_URL = "http://44.220.11.145";
+
+  const handleVerify = async () => {
+    const email = String(params.email || (await AsyncStorage.getItem("email")) || "");
+    const codigo = code.join("").trim();
+    if (!email || codigo.length === 0) {
+      setError("Preencha o código enviado por email.");
       return;
     }
     setError("");
-    
-    router.push("/auth/registro1");
+    setLoading(true);
+    try {
+      const resp = await axios.post(`${API_BASE_URL}/auth/verify-email`, { email, codigo }, { headers: { "Content-Type": "application/json" }, timeout: 10000 });
+      console.log("verify resp:", resp.status, resp.data);
+      if (resp.data && resp.data.success) {
+        // optional: save token if returned
+        if (resp.data.token) {
+          await AsyncStorage.setItem("token", String(resp.data.token));
+        }
+        router.push("/auth/welcome");
+      } else {
+        setError(resp.data.message || "Código inválido");
+      }
+    } catch (err: any) {
+      console.log("verify error:", err?.response?.data || err.message || err);
+      setError(err?.response?.data?.message || "Erro ao verificar código");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -56,10 +71,7 @@ export default function LoginScreen() {
     
 
       <View style={styles.botoes}>
-        <ButtonBase title="Finalizar cadastro" onPress={() => router.push("/auth/welcome")} />
-
-     
-       
+        <ButtonBase title={loading ? "Verificando..." : "Finalizar cadastro"} onPress={handleVerify} disabled={loading} />
       </View>
     </View>
   );

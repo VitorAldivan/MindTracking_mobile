@@ -1,69 +1,253 @@
-import React, { useState, useRef, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
+  Alert,
+  Animated,
   Dimensions,
   Image,
-  Animated,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useRouter } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
+const API_BASE_URL = "http://44.220.11.145";
 
 export default function Questionnaire() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const mode = String(params?.mode ?? "");
 
-  const [questions] = useState([
-    { id: 1, text: "Qual o seu objetivo com o uso do nosso app?" },
-    { id: 2, text: "Com que frequência você se sente estressado?" },
-    { id: 3, text: "Você pratica atividades físicas regularmente?" },
-    { id: 4, text: "Você se sente ansioso durante o dia?" },
-    { id: 5, text: "Como você descreveria sua qualidade de sono?" },
-    { id: 6, text: "Você se sente ansioso durante o dia?" },
-    { id: 7, text: "Como você descreveria sua qualidade de sono?" },
-    { id: 8, text: "Qual o seu objetivo com o uso do nosso app?" },
-    { id: 9, text: "Com que frequência você se sente estressado?" },
-    { id: 10, text: "Você pratica atividades físicas regularmente?" },
-    { id: 11, text: "Você se sente ansioso durante o dia?" },
-    { id: 12, text: "Como você descreveria sua qualidade de sono?" },
-    { id: 13, text: "Você se sente ansioso durante o dia?" },
-    { id: 14, text: "Como você descreveria sua qualidade de sono?" },
-  ]);
+  // no fallback: rely on backend for perguntas
+  const fallback: any[] = [];
 
+  const [questions, setQuestions] = useState<Array<any>>(fallback as any);
+  const [loading, setLoading] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selected, setSelected] = useState<Record<number, number>>({});
+  const [submitting, setSubmitting] = useState(false);
 
   // animação da barra
   const progressAnim = useRef(new Animated.Value(0)).current;
 
+  // animate progress when index or questions length change; progress = answeredCount / total
   useEffect(() => {
     const total = questions.length;
-    const newProgress = ((currentQuestionIndex + 1) / total) * 100;
+    const newProgress = total === 0 ? 0 : (currentQuestionIndex / total) * 100;
 
     Animated.timing(progressAnim, {
       toValue: newProgress,
-      duration: 500, 
-      useNativeDriver: false, 
+      duration: 300,
+      useNativeDriver: false,
     }).start();
-  }, [currentQuestionIndex]);
+  }, [currentQuestionIndex, questions.length, progressAnim]);
 
-  const handleNext = () => {
+  // fetch questions from backend
+  useEffect(() => {
+    let mounted = true;
+    async function fetchQuestions() {
+      setLoading(true);
+      try {
+        const token = await AsyncStorage.getItem("token");
+        const perguntasEndpoint = mode === "diario" ? `${API_BASE_URL}/questionario/diario/perguntas` : `${API_BASE_URL}/questionario/perguntas`;
+        const resp = await axios.get(perguntasEndpoint, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          timeout: 10000,
+        });
+        if (mounted && resp?.data) {
+          // API may return { success:true, perguntas: [...] } or an array directly
+          const raw = Array.isArray(resp.data) ? resp.data : resp.data.perguntas ?? resp.data;
+          if (Array.isArray(raw) && raw.length > 0) {
+            setQuestions(
+              raw.map((q: any, idx: number) => ({
+                id: Number(q.id ?? idx + 1),
+                text: String(q.text ?? q.texto ?? q.pergunta ?? q.question ?? ""),
+                alternativas: Array.isArray(q.alternativas)
+                  ? q.alternativas.map((a: any) => ({ id: Number(a.id), texto: a.texto ?? a.text ?? String(a), pontuacao: a.pontuacao ?? null }))
+                  : [],
+              }))
+            );
+          }
+        }
+      } catch (e) {
+        console.log("Could not fetch questions, using fallback", (e as any)?.message ?? String(e));
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+
+    fetchQuestions();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleNext = async () => {
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setCurrentQuestionIndex((c) => c + 1);
     } else {
+      await submitAnswers();
     }
   };
 
   const handleBack = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
+      setCurrentQuestionIndex((c) => c - 1);
+    }
+  };
+
+  const handleSelect = async (alternativaId: number) => {
+    const perguntaId = questions[currentQuestionIndex]?.id;
+    if (!perguntaId) return;
+    setSelected((s) => ({ ...s, [perguntaId]: alternativaId }));
+    // auto-advance
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex((c) => c + 1);
+    } else {
+      await submitAnswers();
+    }
+  };
+
+  const submitAnswers = async () => {
+    setSubmitting(true);
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const respostas = questions
+        .map((q: any) => ({ pergunta_id: q.id, alternativa_id: selected[q.id] }))
+        .filter((r: any) => r.alternativa_id !== undefined && r.alternativa_id !== null);
+
+      const body: any = { respostas };
+      // ensure we send a valid usuario_id: first try AsyncStorage
+      let usuarioId = await AsyncStorage.getItem("usuario_id");
+
+      // helper: robust JWT decode + network lookup to obtain usuario_id and persist it
+      const base64Decode = (b64: string) => {
+        try {
+          // handle URL-safe base64
+          const padded = b64.replace(/-/g, '+').replace(/_/g, '/');
+          // add padding
+          const pad = padded.length % 4;
+          const withPad = pad === 0 ? padded : padded + '='.repeat(4 - pad);
+          if (typeof globalThis.atob === 'function') {
+            return globalThis.atob(withPad);
+          }
+          // React Native JS environment: use Buffer if available
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          if (typeof (globalThis as any).Buffer !== 'undefined') {
+            // @ts-ignore
+            return (globalThis as any).Buffer.from(withPad, 'base64').toString('utf8');
+          }
+          // last resort: try decoding via decodeURIComponent
+          const binary = atob(withPad);
+          return decodeURIComponent(escape(binary));
+        } catch (e) {
+          return null;
+        }
+      };
+
+      const decodeJwt = (tk?: string) => {
+        if (!tk) return null;
+        try {
+          const parts = tk.split('.');
+          if (parts.length < 2) return null;
+          const json = base64Decode(parts[1]);
+          if (!json) return null;
+          return JSON.parse(json);
+        } catch (e) {
+          return null;
+        }
+      };
+
+      const tryNetworkUser = async (tk?: string) => {
+        if (!tk) return null;
+        const candidates = [
+          `${API_BASE_URL}/auth/me`,
+          `${API_BASE_URL}/usuario/me`,
+          `${API_BASE_URL}/user/me`,
+          `${API_BASE_URL}/users/me`,
+          `${API_BASE_URL}/usuario`,
+          `${API_BASE_URL}/user`,
+        ];
+        for (const url of candidates) {
+          try {
+            const res = await axios.get(url, { headers: { Authorization: `Bearer ${tk}` }, timeout: 5000 });
+            if (res?.data) return res.data;
+          } catch (_) {
+            // ignore and try next
+          }
+        }
+        return null;
+      };
+
+      // 1) AsyncStorage
+      // (usuarioId variable already set above from AsyncStorage getItem)
+
+      // 2) decode JWT token payload
+      if (!usuarioId && token) {
+        const decoded = decodeJwt(token);
+        if (decoded) {
+          usuarioId = String(decoded.id ?? decoded.user?.id ?? decoded.usuario_id ?? decoded.usuario?.id ?? decoded.sub ?? "");
+          if (usuarioId) {
+            await AsyncStorage.setItem('usuario_id', usuarioId);
+            console.log('Decoded usuario_id from token:', usuarioId);
+          }
+        }
+      }
+
+      // 3) network lookup (last resort)
+      if (!usuarioId && token) {
+        try {
+          const userData = await tryNetworkUser(token);
+          if (userData) {
+            usuarioId = String(userData.id ?? userData.user?.id ?? userData.usuario_id ?? userData.usuario?.id ?? userData.sub ?? "");
+            if (usuarioId) {
+              await AsyncStorage.setItem('usuario_id', usuarioId);
+              console.log('Fetched usuario_id from network:', usuarioId);
+            }
+          }
+        } catch (e) {
+          console.log('Network lookup for usuario_id failed', (e as any)?.message ?? e);
+        }
+      }
+
+      if (usuarioId) body.usuario_id = Number(usuarioId);
+
+      const responderEndpoint = mode === "diario" ? `${API_BASE_URL}/questionario/diario/responder` : `${API_BASE_URL}/questionario/responder`;
+      await axios.post(responderEndpoint, body, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+
+      // on success
+      await AsyncStorage.removeItem("questionario_pending");
+      // if this was the daily questionnaire, persist that it was completed today
+      try {
+        // sempre marcar o questionário como concluído — seja inicial ou diário
+const today = new Date().toISOString().slice(0, 10);
+await AsyncStorage.setItem("diario_last_done", today);
+await AsyncStorage.setItem("diario_show_modal", "true");
+
+      } catch (e) {
+        // ignore storage errors
+        console.log('Failed to persist diario flag', (e as any)?.message ?? e);
+      }
+
+      router.replace("/(tabs)/home");
+    } catch (err) {
+      console.log("Failed submit answers", (err as any)?.response ?? err);
+      // prefer backend message when available
+      const message = (err as any)?.response?.data?.message ?? (err as any)?.message ?? "Não foi possível enviar suas respostas. Tente novamente.";
+      Alert.alert("Erro", String(message));
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const renderProgressBar = () => {
     const total = questions.length;
-    const progress = ((currentQuestionIndex + 1) / total) * 100;
+    const progress = total === 0 ? 0 : (currentQuestionIndex / total) * 100;
 
     return (
       <>
@@ -73,7 +257,6 @@ export default function Questionnaire() {
         </View>
 
         <View style={styles.progressContainer}>
-          
           <Animated.View
             style={[
               styles.progressBar,
@@ -90,15 +273,47 @@ export default function Questionnaire() {
     );
   };
 
+  // If there are no questions from the backend, show a simple message and a button
+  if (!loading && (!questions || questions.length === 0)) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.backButtonWrapper}>
+          {currentQuestionIndex > 0 && (
+            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+              <Image source={require("../../assets/icons/seta.png")} style={styles.seta} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={styles.middleWrapper}>
+          <Text style={[styles.questionText, { textAlign: "center" }]}>Nenhuma pergunta disponível no momento.</Text>
+        </View>
+
+        <View style={styles.optionContainer}>
+          <TouchableOpacity
+            style={styles.option}
+            onPress={async () => {
+              try {
+                await AsyncStorage.removeItem("questionario_pending");
+              } catch (e) {
+                /* ignore */
+              }
+              router.replace("/(tabs)/home");
+            }}
+          >
+            <Text style={styles.optionText}>Concluir</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.backButtonWrapper}>
         {currentQuestionIndex > 0 && (
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Image
-              source={require("../../assets/icons/seta.png")}
-              style={styles.seta}
-            />
+            <Image source={require("../../assets/icons/seta.png")} style={styles.seta} />
           </TouchableOpacity>
         )}
       </View>
@@ -108,19 +323,37 @@ export default function Questionnaire() {
       <View style={styles.middleWrapper}>
         <View style={styles.questionWrapper}>
           <View style={styles.verticalLine} />
-          <Text style={styles.questionText}>
-            {questions[currentQuestionIndex].text}
-          </Text>
+          <Text style={styles.questionText}>{questions[currentQuestionIndex]?.text ?? ""}</Text>
         </View>
       </View>
 
       <View style={styles.optionContainer}>
-        {["Nunca", "Raramente", "Às vezes", "Sempre"].map((option, index) => (
-          <TouchableOpacity key={index} style={styles.option} onPress={handleNext}>
-            <View style={styles.radio} />
-            <Text style={styles.optionText}>{option}</Text>
-          </TouchableOpacity>
-        ))}
+        {(() => {
+          const q = questions[currentQuestionIndex] ?? { alternativas: [] };
+          if (q.alternativas && q.alternativas.length > 0) {
+            return q.alternativas.map((alt: any) => {
+              const isSelected = selected[q.id] === alt.id;
+              return (
+                <TouchableOpacity
+                  key={String(alt.id)}
+                  style={[styles.option, isSelected ? styles.optionSelected : null]}
+                  onPress={() => handleSelect(alt.id)}
+                >
+                  <View style={[styles.radio, isSelected ? styles.radioSelected : null]} />
+                  <Text style={styles.optionText}>{alt.texto}</Text>
+                </TouchableOpacity>
+              );
+            });
+          }
+
+          // if question exists but has no alternativas: show a Next button
+          return (
+            <TouchableOpacity key="next" style={styles.option} onPress={handleNext}>
+              <View style={styles.radio} />
+              <Text style={styles.optionText}>Próximo</Text>
+            </TouchableOpacity>
+          );
+        })()}
       </View>
     </View>
   );
@@ -204,11 +437,17 @@ const styles = StyleSheet.create({
   },
   option: {
     flexDirection: "row",
-    alignItems: "center",
+    // align to top so wrapped text expands downward
+    alignItems: "flex-start",
     backgroundColor: "#29374F",
     borderRadius: 24,
     paddingVertical: height * 0.02,
     paddingHorizontal: width * 0.05,
+    minHeight: 48,
+    paddingRight: width * 0.04,
+  },
+  optionSelected: {
+    backgroundColor: "#3357D6",
   },
   radio: {
     width: width * 0.05,
@@ -217,10 +456,20 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "white",
     marginRight: width * 0.04,
+    flexShrink: 0,
+  },
+  radioSelected: {
+    backgroundColor: "#2E5BFF",
+    borderColor: "#2E5BFF",
   },
   optionText: {
     color: "white",
     fontSize: width * 0.045,
     fontFamily: "Inter_500Medium",
+    // allow wrapping and ensure text stays within the card
+    flex: 1,
+    flexWrap: "wrap",
+    includeFontPadding: false,
+    marginRight: width * 0.02,
   },
 });

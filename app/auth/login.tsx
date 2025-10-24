@@ -1,8 +1,8 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { ActivityIndicator, Dimensions, Image, StyleSheet, Text, TouchableOpacity, View, Alert } from "react-native";
-import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ActivityIndicator, Alert, Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ButtonBase from "../components/common/button/button";
 import ButtonBase2 from "../components/common/button/button2";
 import InputBase from "../components/common/input/inputBase";
@@ -32,6 +32,12 @@ export default function LoginScreen() {
 
       if (response.data && response.data.token) {
         await AsyncStorage.setItem("token", response.data.token);
+        // save email for profile display
+        try {
+          await AsyncStorage.setItem("email", email);
+        } catch (e) {
+          // ignore
+        }
         router.push("/(tabs)/home");
       } else {
         Alert.alert("Erro", "Resposta inesperada do servidor.");

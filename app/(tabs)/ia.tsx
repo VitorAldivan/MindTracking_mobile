@@ -3,11 +3,9 @@ import InputIA from "../components/common/input/inputIA";
 
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Dimensions, FlatList, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Dimensions, FlatList, Image, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 
 const { width, height } = Dimensions.get("window");
-
-// ... imports inalterados
 
 export default function PreLogin() {
   const router = useRouter();
@@ -15,122 +13,116 @@ export default function PreLogin() {
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<string[]>([]);
   const [chatStarted, setChatStarted] = useState(false);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const flatListRef = useRef<FlatList<string>>(null);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
 
-  // Aceita texto opcional para envio programático (cards)
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', () => setKeyboardOpen(true));
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardOpen(false));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+
   const handleSend = (text?: string) => {
     const toSend = (text ?? inputValue).trim();
     if (!toSend) return;
     setMessages(prev => [...prev, toSend]);
-    setInputValue("");      // não polui o teclado
-    setChatStarted(true);   // força header fixo quando começar
+    setInputValue("");
+    setChatStarted(true);
   };
-
-  useEffect(() => {
-    if (scrollViewRef.current) {
-      scrollViewRef.current.scrollToEnd({ animated: true });
-    }
-  }, [messages]);
 
   const isChat = chatStarted && messages.length > 0;
 
   return (
     <View style={styles.container}>
-    {/* Header dinâmico igual ao seu */}
-    {!isChat ? (
-      <View style={styles.topo}>
-        <Image source={require("../../assets/icons/logo.png")} style={styles.logo} resizeMode="contain" />
-        <View style={styles.titulos}>
-          <Text style={styles.title}>Athena</Text>
-          <Text style={styles.subtitle}>Sua aliada emocional</Text>
-        </View>
-      </View>
-    ) : (
-      <View style={styles.headerFixed}>
-        <View style={[styles.headerRow, styles.headerRowChat]}>
-          <Image
-            source={require("../../assets/icons/logo.png")}
-            style={[styles.logo, styles.logoChat, styles.logoChatActive]}
-            resizeMode="contain"
-          />
-          <Text style={[styles.title, styles.titleChat, styles.titleChatActive]}>Assistente Emocional</Text>
-        </View>
-      </View>
-    )}
-
-    {/* Cards + Input */}
-    {!isChat ? (
-      <View style={styles.inferior}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-          style={styles.cardsScroll}
-        >
-          <CustomButton
-            title="O que posso fazer para me sentir melhor hoje?"
-            onPress={() => handleSend("O que posso fazer para me sentir melhor hoje?")}
-          />
-          <CustomButton
-            title="Registrar meu humor"
-            onPress={() => handleSend("Registrar meu humor")}
-          />
-          <CustomButton
-            title="Meditação guiada"
-            onPress={() => handleSend("Meditação guiada")}
-          />
-          <CustomButton
-            title="Exercícios rápidos"
-            onPress={() => handleSend("Exercícios rápidos")}
-          />
-        </ScrollView>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
-        >
-          <InputIA
-            value={inputValue}
-            onChangeText={setInputValue}
-            onIconPress={() => handleSend()}
-            placeholder="Digite sua mensagem..."
-          />
-        </KeyboardAvoidingView>
-      </View>
-    ) : (
-      <View style={{flex: 1, paddingBottom: height * 0.12}}>
-        <FlatList
-          inverted
-          data={messages}
-          keyExtractor={(_, idx) => String(idx)}
-          contentContainerStyle={styles.chatContainer}
-          style={styles.chatScroll}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <View style={styles.messageBubble}>
-              <Text style={styles.messageText}>{item}</Text>
-            </View>
-          )}
-          maintainVisibleContentPosition={{
-            minIndexForVisible: 1,
-          }}
+      {/* Header dinâmico */}
+      <View style={isChat ? styles.headerFixedChat : styles.topo}>
+        <Image
+          source={require("../../assets/icons/logo.png")}
+          style={
+            isChat
+              ? [styles.logo, styles.logoChat, styles.logoChatActive]
+              : styles.logo
+          }
+          resizeMode="contain"
         />
+        <View style={isChat ? [styles.headerRow, styles.headerRowChat] : styles.titulos}>
+          {isChat ? (
+            <Text style={[styles.title, styles.titleChat, styles.titleChatActive]}>
+              Assistente Emocional
+            </Text>
+          ) : (
+            <>
+              <Text style={styles.title}>Athena</Text>
+              <Text style={styles.subtitle}>Sua aliada emocional</Text>
+            </>
+          )}
+        </View>
+      </View>
+
+      {/* Area principal */}
+      {!isChat ? (
+        <View style={styles.inferior}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+            style={styles.cardsScroll}
+          >
+            <CustomButton title="O que posso fazer para me sentir melhor hoje?" onPress={() => handleSend("O que posso fazer para me sentir melhor hoje?")} />
+            <CustomButton title="Registrar meu humor" onPress={() => handleSend("Registrar meu humor")} />
+            <CustomButton title="Meditação guiada" onPress={() => handleSend("Meditação guiada")} />
+            <CustomButton title="Exercícios rápidos" onPress={() => handleSend("Exercícios rápidos")} />
+          </ScrollView>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "position"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
+          >
+            <InputIA
+              value={inputValue}
+              onChangeText={setInputValue}
+              onIconPress={() => handleSend()}
+              placeholder="Digite sua mensagem..."
+            />
+          </KeyboardAvoidingView>
+        </View>
+      ) : (
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.chatContent}
+          behavior={Platform.OS === "ios" ? "padding" : "position"}
           keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
         >
-          <InputIA
-            value={inputValue}
-            onChangeText={setInputValue}
-            onIconPress={() => handleSend()}
-            placeholder="Digite sua mensagem..."
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={(_, idx) => String(idx)}
+            contentContainerStyle={styles.chatContainer}
+            style={styles.chatScroll}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <View style={styles.messageBubble}>
+                <Text style={styles.messageText}>{item}</Text>
+              </View>
+            )}
+            onContentSizeChange={() => {
+              flatListRef.current?.scrollToEnd({ animated: true });
+            }}
           />
+          <View style={!keyboardOpen ? styles.inputWrapperWithPadding : null}>
+            <InputIA
+              value={inputValue}
+              onChangeText={setInputValue}
+              onIconPress={() => handleSend()}
+              placeholder="Digite sua mensagem..."
+            />
+          </View>
         </KeyboardAvoidingView>
-      </View>
-    )}
-      </View>
+      )}
+    </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   cardsScroll: {},
@@ -146,8 +138,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#0F172A",
     paddingHorizontal: width * 0.08,
-    paddingVertical: height * 0.06,
-    justifyContent: "center",
+    paddingTop: height * 0.06,
   },
   logo: {
     width: width * 0.42,
@@ -155,49 +146,47 @@ const styles = StyleSheet.create({
     marginBottom: height * -0.03,
   },
   logoChat: {
-    width: width * 0.13,
-    height: height * 0.06,
+    width: width * 0.12,
+    height: width * 0.12,
+    marginRight: width * 0.03,
     marginBottom: 0,
-    marginRight: width * 0.02,
-    alignSelf: "flex-end",
+    alignSelf: "auto",
   },
   logoChatActive: {
-    width: width * 0.18,
-    height: height * 0.11,
+    width: width * 0.12,
+    height: width * 0.12,
+    marginRight: width * 0.03,
   },
   topo: {
     gap: height * 0.05,
     marginBottom: height * 0.02,
     alignItems: "center",
   },
-  topoChat: {
-    marginBottom: height * 0.01,
-    alignItems: "flex-start",
-    paddingTop: height * 0.01,
-    
-  },
-  headerFixed: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 100,
-    backgroundColor: "#0F172A",
-    paddingHorizontal: width * 0.08,
-    paddingTop: height * 0.06,
-    paddingBottom: height * 0.02,
-    
-    
-  },
-  headerRow: {
+  headerFixedChat: {
     flexDirection: "row",
     alignItems: "center",
+    paddingHorizontal: width * 0.08,
+    paddingTop: height * 0.04,
+    paddingBottom: height * 0.025,
+    width: "100%",
+    backgroundColor: "#0F172A",
+    zIndex: 1,
+  },
+  headerRow: {
+    flex: 1,
     justifyContent: "center",
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
+    backgroundColor: "transparent",
+    flexDirection: "row",
+    alignItems: "center",
   },
   headerRowChat: {
-    justifyContent: "flex-end",
-    alignItems: "flex-start",
-    width: "100%",
+    marginLeft: 0,
+    alignItems: "center",
+    justifyContent: "flex-start",
+    width: "auto",
     marginBottom: 0,
   },
   titulos: {
@@ -211,17 +200,17 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
   },
   titleChat: {
-    fontSize: width * 0.06,
+    fontSize: width * 0.07,
     color: "#fff",
     textAlign: "left",
     fontFamily: "Inter_600SemiBold",
-    marginLeft: width * 0.01,
+    marginLeft: 0,
     alignSelf: "center",
   },
   titleChatActive: {
-    fontSize: width * 0.055,
+    fontSize: width * 0.07,
     fontFamily: "Inter_700Bold",
-    marginRight: width * 0.07,
+    marginRight: 0,
   },
   subtitle: {
     fontSize: width * 0.04,
@@ -243,11 +232,16 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: height * 0.14 + height * 0.02,
     paddingHorizontal: width * 0.08,
-    
+  },
+  chatContent: {
+    flex: 1,
+    paddingTop: height * 0.01,
+  },
+  inputWrapperWithPadding: {
+    paddingBottom: height * 0.160, // ajuste o valor até ficar igual ao print 1 SEM teclado aberto
   },
   chatScroll: {
     flex: 1,
-    marginBottom: height * 0.02,
     maxHeight: "100%",
   },
   chatContainer: {

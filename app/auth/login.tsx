@@ -38,6 +38,68 @@ export default function LoginScreen() {
         } catch (e) {
           // ignore
         }
+
+        // Decode token locally to extract payload (nome, email) if backend includes them in JWT
+        try {
+          const decodeJwt = (token: string) => {
+            try {
+              const parts = token.split('.');
+              if (parts.length !== 3) return null;
+              const payload = parts[1];
+              const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+              let json = null as string | null;
+              const atobFn = (global as any).atob || (globalThis as any).atob;
+              if (typeof atobFn === 'function') { 
+                // atob exists
+                const decoded = atobFn(base64);
+                json = decodeURIComponent(
+                  Array.prototype.map
+                    .call(decoded, function (c: string) {
+                      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    })
+                    .join('')
+                );
+              } else if (typeof (global as any).Buffer !== 'undefined') { 
+                json = (global as any).Buffer.from(base64, 'base64').toString('utf8');
+              } else {
+                return null;
+              }
+              if (!json) return null;
+              return JSON.parse(json);
+            } catch (err) {
+              return null;
+            }
+          };
+
+          const payload = decodeJwt(response.data.token);
+          if (payload) {
+            if (payload.nome) {
+              try {
+                await AsyncStorage.setItem('nome', String(payload.nome));
+              } catch (e) {
+                // ignore
+              }
+            }
+            if (payload.email) {
+              try {
+                await AsyncStorage.setItem('email', String(payload.email));
+              } catch (e) {
+                // ignore
+              }
+            }
+          } else {
+            // fallback: if backend returned nome in top-level response (older implementation), persist it
+            if (response.data.nome) {
+              try {
+                await AsyncStorage.setItem('nome', String(response.data.nome));
+              } catch (e) {
+                // ignore
+              }
+            }
+          }
+        } catch (e) {
+          // ignore decoding errors
+        }
         router.push("/(tabs)/home");
       } else {
         Alert.alert("Erro", "Resposta inesperada do servidor.");

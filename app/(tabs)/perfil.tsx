@@ -20,13 +20,60 @@ export default function Perfil() {
   const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
   const [nome, setNome] = useState<string | null>(null);
-
   useEffect(() => {
     let mounted = true;
-    async function loadProfile() {
+
+    async function loadProfileFromToken() {
       try {
-        const e = await AsyncStorage.getItem("email");
-        const n = await AsyncStorage.getItem("nome");
+        const token = await AsyncStorage.getItem('token');
+        if (token) {
+          const decodeJwt = (t: string) => {
+            try {
+              const parts = t.split('.');
+              if (parts.length !== 3) return null;
+              const payload = parts[1];
+              const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+              let json: string | null = null;
+              const atobFn = (global as any).atob || (globalThis as any).atob;
+              if (typeof atobFn === 'function') {
+                const decoded = atobFn(base64);
+                json = decodeURIComponent(
+                  Array.prototype.map
+                    .call(decoded, function (c: string) {
+                      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    })
+                    .join('')
+                );
+              } else if (typeof (global as any).Buffer !== 'undefined') {
+                json = (global as any).Buffer.from(base64, 'base64').toString('utf8');
+              } else {
+                return null;
+              }
+              if (!json) return null;
+              return JSON.parse(json);
+            } catch (err) {
+              return null;
+            }
+          };
+
+          const payload = decodeJwt(token);
+          if (payload) {
+            const serverEmail = payload.email ?? null;
+            const serverNome = payload.nome ?? null;
+            if (mounted) {
+              if (serverEmail) setEmail(serverEmail);
+              if (serverNome) setNome(serverNome);
+            }
+            // persist locally
+            if (serverEmail) await AsyncStorage.setItem('email', String(serverEmail));
+            if (serverNome) await AsyncStorage.setItem('nome', String(serverNome));
+            return;
+          }
+        }
+
+        // fallback: read from AsyncStorage
+        const e = await AsyncStorage.getItem('email');
+        const n = await AsyncStorage.getItem('nome');
         if (mounted) {
           setEmail(e);
           setNome(n);
@@ -35,7 +82,8 @@ export default function Perfil() {
         // ignore
       }
     }
-    loadProfile();
+
+    loadProfileFromToken();
     return () => {
       mounted = false;
     };

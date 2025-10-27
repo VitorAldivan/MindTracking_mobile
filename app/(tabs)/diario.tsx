@@ -1,10 +1,10 @@
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
+  Alert,
   Dimensions,
   FlatList,
   Image,
-  LayoutChangeEvent,
   Modal,
   ScrollView,
   StyleSheet,
@@ -13,23 +13,25 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import diarioService from "../../service/diarioService";
 import CardDiario from "../components/cards/cardDiario";
 
 const { width, height } = Dimensions.get("window");
 
 const diariosFake = [
-  { titulo: "Avanço no Projeto", data: "08/10/2025 - 16:31", texto: "Finalizei a integração entre React Native e backend simulando cards dinâmicos." },
-  { titulo: "Reunião com equipe", data: "07/10/2025 - 14:20", texto: "Discutimos melhorias para o app e definimos próximos passos." },
-  { titulo: "Estudo de UI/UX", data: "06/10/2025 - 09:10", texto: "Pesquisei tendências de design para melhorar a experiência do usuário." },
-  { titulo: "Testes automatizados", data: "05/10/2025 - 18:45", texto: "Implementei testes unitários para garantir a qualidade do código." },
-  { titulo: "Avanço no Projeto", data: "08/10/2025 - 16:31", texto: "Finalizei a integração entre React Native e backend simulando cards dinâmicos." },
-  { titulo: "Reunião com equipe", data: "07/10/2025 - 14:20", texto: "Discutimos melhorias para o app e definimos próximos passos." },
-  { titulo: "Estudo de UI/UX", data: "06/10/2025 - 09:10", texto: "Pesquisei tendências de design para melhorar a experiência do usuário." },
-  { titulo: "Testes automatizados", data: "05/10/2025 - 18:45", texto: "Implementei testes unitários para garantir a qualidade do código." },
-  { titulo: "Avanço no Projeto", data: "08/10/2025 - 16:31", texto: "Finalizei a integração entre React Native e backend simulando cards dinâmicos." },
+  { id: '1', titulo: "Avanço no Projeto", data: "08/10/2025 - 16:31", texto: "Finalizei a integração entre React Native e backend simulando cards dinâmicos." },
+  { id: '2', titulo: "Reunião com equipe", data: "07/10/2025 - 14:20", texto: "Discutimos melhorias para o app e definimos próximos passos." },
+  { id: '3', titulo: "Estudo de UI/UX", data: "06/10/2025 - 09:10", texto: "Pesquisei tendências de design para melhorar a experiência do usuário." },
+  { id: '4', titulo: "Testes automatizados", data: "05/10/2025 - 18:45", texto: "Implementei testes unitários para garantir a qualidade do código." },
 ];
 
-type DiarioItem = typeof diariosFake[number];
+type DiarioItem = {
+  id?: string | number;
+  _id?: string | number;
+  titulo?: string;
+  data?: string;
+  texto: string;
+};
 
 export default function Diario() {
   const router = useRouter();
@@ -48,26 +50,92 @@ export default function Diario() {
   // Conteúdo
   const [selectedDiario, setSelectedDiario] = useState<DiarioItem | null>(null);
   const [textoDiario, setTextoDiario] = useState("");
+  const [tituloDiario, setTituloDiario] = useState("");
 
   useEffect(() => {
-    const t = setTimeout(() => setDiarios(diariosFake), 700);
-    return () => clearTimeout(t);
+    let mounted = true;
+
+    async function loadDiarios() {
+      try {
+        const resp = await diarioService.getAllDiarios();
+        // resp may be an array or an object containing data; be defensive
+        const list = Array.isArray(resp) ? resp : resp?.data ?? [];
+        // if server returned nothing, fall back to example diaries so UI can be tested
+        if (mounted) setDiarios(list && list.length ? list : diariosFake);
+      } catch (e) {
+        // fallback to example diaries on error
+        if (mounted) setDiarios(diariosFake);
+      }
+    }
+
+    loadDiarios();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const keyExtractor = useCallback((item: DiarioItem, index: number) => String(index), []);
 
-  const abrirModalAnalise = useCallback((item: DiarioItem) => {
-    setSelectedDiario(item);
+  const abrirModalAnalise = useCallback((item: any) => {
+    setSelectedDiario(null);
     setModalAnaliseVisivel(true);
+
+    // if item has an id, fetch full diary from server
+    (async () => {
+      try {
+        if (item && (item.id || item._id)) {
+          const id = item.id ?? item._id;
+          const resp = await diarioService.getDiarioById(id);
+          setSelectedDiario(resp ?? item);
+        } else {
+          setSelectedDiario(item);
+        }
+      } catch (e) {
+        // failed to fetch specific diary — show provided item
+        setSelectedDiario(item);
+      }
+    })();
   }, []);
 
   const renderItem = useCallback(({ item }: { item: DiarioItem }) => {
+    // Ensure CardDiario receives required string fields
+    const safe = {
+      titulo: item.titulo ?? "",
+      data: item.data ?? "",
+      texto: item.texto ?? "",
+    };
     return (
       <View style={styles.cardWrapper}>
         <CardDiario
-          diario={item}
+          diario={safe}
           onAnalyze={() => abrirModalAnalise(item)}
         />
+      </View>
+    );
+  }, [abrirModalAnalise]);
+
+  // New: robust renderItem and keyExtractor to handle server-returned shapes
+  const keyExtractorById = useCallback((item: DiarioItem, index: number) => String(item._id ?? item.id ?? index), []);
+
+  const renderDiarioItem = useCallback(({ item }: { item: DiarioItem }) => {
+    const titulo = item.titulo ?? (item as any).title ?? (item as any).name ?? "";
+    const texto = item.texto ?? (item as any).text ?? (item as any).body ?? "";
+    const rawDate = item.data ?? (item as any).createdAt ?? (item as any).created_at ?? (item as any).date ?? "";
+    let dataStr = "";
+    try {
+      if (rawDate) {
+        const d = new Date(rawDate);
+        dataStr = !Number.isNaN(d.getTime()) ? d.toLocaleString() : String(rawDate);
+      }
+    } catch (e) {
+      dataStr = String(rawDate);
+    }
+
+    const safe = { titulo, data: dataStr, texto };
+    return (
+      <View style={styles.cardWrapper}>
+        <CardDiario diario={safe} onAnalyze={() => abrirModalAnalise(item)} />
       </View>
     );
   }, [abrirModalAnalise]);
@@ -75,9 +143,9 @@ export default function Diario() {
   const ItemSeparator = useCallback(() => <View style={styles.gap} />, []);
   const ListFooter = useCallback(() => <View style={styles.footerSpacer} />, []);
 
-  const onHeaderLayout = useCallback((e: LayoutChangeEvent) => {
-    const h = e.nativeEvent.layout.height;
-    setHeaderHeight(prev => (prev !== h ? h : prev));
+  const onHeaderLayout = useCallback((e: any) => {
+    const h = e?.nativeEvent?.layout?.height ?? 0;
+    setHeaderHeight((prev: number) => (prev !== h ? h : prev));
   }, []);
 
   // Ação do FAB
@@ -85,6 +153,7 @@ export default function Diario() {
     if (fabState === "plus") {
       // Abre o Modal 2 (Escrita no Diário)
       setTextoDiario("");
+      setTituloDiario("");
       setModalEscritaVisivel(true);
     } else {
       // fabState === 'done' → abre Modal 3
@@ -93,13 +162,130 @@ export default function Diario() {
   }, [fabState]);
 
   // Salvar do Modal 2
-  const onSalvarReflexao = useCallback(() => {
-    // Fecha Modal 2 e abre Modal 4 de parabéns
-    setModalEscritaVisivel(false);
-    setModalParabensVisivel(true);
-    // Troca estado do FAB para 'done'
-    setFabState("done");
-  }, []);
+  const onSalvarReflexao = useCallback(async () => {
+    try {
+      // Require title and text (title is now mandatory)
+      if (!tituloDiario.trim() || !textoDiario.trim()) {
+        // Button should be disabled; guard here as well
+        return;
+      }
+
+      // Try to send the diary to backend
+      const payload = {
+        titulo: tituloDiario.trim(),
+        texto: textoDiario,
+      };
+      // debug: show payload in logs
+      console.log('Diário - payload enviado:', payload);
+      const resp = await diarioService.postDiario(payload);
+      console.log('Diário - resposta do servidor:', resp);
+
+      // Try to extract the created diary from the response so we can show it
+      // immediately in the list. Backends may return the created object
+      // directly or an envelope like { message, data }.
+      let created: any = null;
+      if (resp) {
+        if (Array.isArray(resp)) {
+          // ignore
+        } else if (resp._id || resp.id || (resp.titulo && resp.texto)) {
+          created = resp;
+        } else if (resp.data && (resp.data._id || resp.data.id || (resp.data.titulo && resp.data.texto))) {
+          created = resp.data;
+        } else if ((resp as any).diario && ((resp as any).diario._id || (resp as any).diario.id)) {
+          created = (resp as any).diario;
+        }
+      }
+
+      if (created) {
+        const mapped = {
+          _id: created._id ?? created.id,
+          titulo: created.titulo ?? created.title ?? "",
+          texto: created.texto ?? created.text ?? created.body ?? "",
+          data: (() => {
+            const raw = created.data ?? created.createdAt ?? created.date ?? "";
+            try {
+              if (!raw) return "";
+              const d = new Date(raw);
+              return Number.isNaN(d.getTime()) ? String(raw) : d.toLocaleString();
+            } catch (e) {
+              return String(raw);
+            }
+          })(),
+        } as DiarioItem;
+
+  setDiarios((prev: DiarioItem[]) => [mapped, ...prev]);
+      }
+
+      // show success alert with optional server message
+      Alert.alert('Sucesso', resp?.message || 'Diário enviado com sucesso');
+
+      // Refresh list
+      try {
+        const all = await diarioService.getAllDiarios();
+        const list = Array.isArray(all) ? all : all?.data ?? [];
+        setDiarios(list);
+      } catch (err) {
+        // ignore refresh errors
+      }
+
+      // Fecha Modal 2 e abre Modal 4 de parabéns
+      setModalEscritaVisivel(false);
+      setModalParabensVisivel(true);
+      // Troca estado do FAB para 'done'
+      setFabState("done");
+      // clear inputs
+      setTituloDiario("");
+      setTextoDiario("");
+    } catch (err: any) {
+      // Show an alert or the 'already registered' modal depending on server message
+      const msg = err?.response?.data?.message || err?.message || 'Erro ao enviar diário';
+      console.log('Diário - erro ao enviar:', err?.response ?? err);
+
+      // If backend reports that a diary already exists for today, show the registered modal
+      try {
+        const lower = String(msg).toLowerCase();
+        if (/ja existe|já existe|já foi registrada|já foi registrado|already exists|already registered|registro.*hoje|registrad[ao].*hoje/.test(lower)) {
+          // Close writing modal
+          setModalEscritaVisivel(false);
+
+          // Try to fetch today's diary from server and show it in the analysis modal.
+          try {
+            const all = await diarioService.getAllDiarios();
+            const list = Array.isArray(all) ? all : all?.data ?? [];
+            const today = new Date().toISOString().slice(0, 10);
+            const found = (list as any[]).find((d: any) => {
+              const raw = d.data ?? d.createdAt ?? d.created_at ?? d.date ?? "";
+              if (!raw) return false;
+              try {
+                const day = new Date(raw).toISOString().slice(0, 10);
+                return day === today;
+              } catch (e) {
+                return false;
+              }
+            });
+
+            if (found) {
+              setSelectedDiario(found);
+              setModalAnaliseVisivel(true);
+              return;
+            }
+          } catch (e) {
+            // ignore fetch errors and fall back to the simple registered modal
+          }
+
+          // Fallback: open the existing 'already registered' modal
+          setModalRegistradoVisivel(true);
+          return;
+        }
+      } catch (e) {
+        // ignore regex errors
+      }
+
+      Alert.alert('Erro ao enviar diário', msg, [{ text: 'OK' }]);
+      // keep the writing modal open so the user can retry
+      setModalEscritaVisivel(true);
+    }
+  }, [tituloDiario, textoDiario]);
 
   // Fechar Modal 4 e voltar para a tela normal
   const onFecharParabens = useCallback(() => {
@@ -142,9 +328,9 @@ export default function Diario() {
           styles.listContentBase,
           { paddingTop: headerHeight },
         ]}
-        data={diarios}
-        keyExtractor={keyExtractor}
-        renderItem={renderItem}
+  data={diarios}
+  keyExtractor={keyExtractorById}
+  renderItem={renderDiarioItem}
         ItemSeparatorComponent={ItemSeparator}
         ListFooterComponent={ListFooter}
         showsVerticalScrollIndicator={false}
@@ -243,7 +429,15 @@ export default function Diario() {
               />
             </View>
 
-            <Text style={styles.modalHeading}>Escrita no Diário</Text>
+            <TextInput
+              value={tituloDiario}
+              onChangeText={setTituloDiario}
+              placeholder="Título do diário"
+              placeholderTextColor="rgba(255,255,255,0.6)"
+              style={styles.titleInput}
+              maxLength={20}
+              numberOfLines={1}
+            />
             <Text style={styles.modalBodyMuted}>
               Escreva livremente - somente você verá isso.
             </Text>
@@ -285,7 +479,7 @@ export default function Diario() {
                 style={[styles.actionBtn, styles.btnPrimary]}
                 onPress={onSalvarReflexao}
                 activeOpacity={0.9}
-                disabled={textoDiario.trim().length === 0}
+                disabled={textoDiario.trim().length === 0 || tituloDiario.trim().length === 0}
               >
                 <Text style={styles.btnPrimaryText}>Salvar</Text>
               </TouchableOpacity>
@@ -479,6 +673,15 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontSize: Math.max(width * 0.065, 16),
     marginBottom: height * 0.018,
+  },
+  titleInput: {
+    color: "#FFFFFF",
+    textAlign: "center",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: Math.max(width * 0.065, 16),
+    marginBottom: height * 0.018,
+    borderBottomWidth: 0,
+    paddingVertical: 0,
   },
   modalLabel: {
     color: "#fff",

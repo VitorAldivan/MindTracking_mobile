@@ -1,14 +1,40 @@
+import { useRouter } from "expo-router";
 import React from "react";
-import { Dimensions, ScrollView, StyleSheet, View } from "react-native";
-import { CorrelationsCard, InfoCard, StatCard, AthenaCard, ExportarJornadaCard   } from "../components/cards/cardDashboard1";
+import { Dimensions, Image, LayoutChangeEvent, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { AthenaCard, CorrelationsCard, ExportarJornadaCard, InfoCard, StatCard } from "../components/cards/cardDashboard1";
 import { GraficoCard } from "../components/cards/grafico";
 
 
 const { width, height } = Dimensions.get("window");
 
 export default function Dashboard() {
+  const router = useRouter();
+
+  const onHeaderLayout = (_event: LayoutChangeEvent) => {
+    // placeholder: if you need header measurements later, handle them here
+  };
   return (
     <View style={styles.container}>
+      <View style={styles.fixedHeader} onLayout={onHeaderLayout}>
+              <View style={styles.headerRow}>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/home')}>
+                  <Image
+                    source={require("@assets/icons/seta.png")}
+                    style={styles.seta}
+                  />
+                </TouchableOpacity>
+      
+                <View style={styles.textContainer}>
+                  <Text style={styles.perfilText}>Meus Diários</Text>
+                </View>
+      
+                <View style={{ width: width * 0.09 }} />
+              </View>
+      
+              <Text style={styles.titleLarge}>
+                Seu refúgio de pensamentos seguros
+              </Text>
+            </View>
       <ScrollView
         contentContainerStyle={styles.cardsWrapper}
         showsVerticalScrollIndicator={false}
@@ -87,5 +113,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: height * 0.02,
     paddingBottom: height * 0.1,
+  },
+  fixedHeader: {
+    
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    paddingHorizontal: width * 0.07,
+    paddingTop: height * 0.06,
+    paddingBottom: height * 0.025,
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 10,
+    elevation: 6,
+    backgroundColor: "#0F172A"
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: height * 0.02,
+  },
+  seta: {
+    width: width * 0.09,
+    height: width * 0.08,
+    top: height * 0.01,
+    tintColor: "#fff",
+    resizeMode: "contain",
+    marginBottom: height * 0.025,
+    transform: [{ rotate: "90deg" }],
+  },
+  textContainer: {
+    flex: 1,
+    alignItems: "center",
+  },
+  perfilText: {
+    color: "#fff",
+    fontSize: Math.max(width * 0.05, 14),
+    fontFamily: "Inter_600SemiBold",
+  },
+  titleLarge: {
+    color: "#fff",
+    fontSize: Math.max(width * 0.055, 18),
+    fontFamily: "Inter_600SemiBold",
   },
 });

@@ -1,7 +1,7 @@
-import axios from "axios";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Alert, Dimensions, StyleSheet, Text, View } from "react-native";
+import { recoverPassword } from "../../service/passwordService";
 import ButtonBase from "../components/common/button/button";
 import InputBase from "../components/common/input/inputBase";
 
@@ -21,18 +21,15 @@ export default function Redefined1() {
     }
     setLoading(true);
     try {
-      const resp = await axios.post(`${API_BASE_URL}/auth/recuperar-senha`, { email }, { timeout: 10000 });
-      if (resp.data && resp.data.success) {
-        // navegar para confirm-code com param indicando fluxo de recuperação
+      const resp = await recoverPassword(email);
+      if (resp && resp.success) {
         router.push({ pathname: "/auth/confirm-code", params: { email: String(email), from: "recover" } });
       } else {
-        // backend pode retornar erro no body
-        Alert.alert("Erro", resp.data?.message || "Email não identificado");
+        Alert.alert("Erro", resp?.message || "Email não identificado");
       }
     } catch (err: any) {
-      console.log("recuperar-senha error:", err?.response?.data || err.message || err);
-      const msg = err?.response?.data?.message;
-      Alert.alert("Erro", msg || "Email não identificado");
+      console.log("recuperar-senha error:", err?.message || err);
+      Alert.alert("Erro", err?.message || "Email não identificado");
     } finally {
       setLoading(false);
     }

@@ -3,9 +3,10 @@
   "compilerOptions": {
     "strict": true,
     "jsx": "react-native",
+    "module": "Node16",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node",
+  "moduleResolution": "node16",
     "skipLibCheck": true,
     "paths": {
       "@/*": [

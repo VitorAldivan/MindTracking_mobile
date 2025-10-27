@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState , useCallback } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -13,7 +13,6 @@ import {
 } from "react-native";
 import FeatureCard from "../components/cards/card1";
 import InfoCard from "../components/cards/card2";
-import { useFocusEffect } from "expo-router";
 
 
 const { width, height } = Dimensions.get("window");
@@ -102,7 +101,7 @@ useFocusEffect(
           {/* CARDS DE AÇÃO */}
           <View style={styles.actionRow}>
             <FeatureCard variant="checkin" done={done} onPress={handleCardPress} />
-            <FeatureCard variant="athena" />
+            <FeatureCard variant="athena" onPress={() => router.push('/(tabs)/ia')} />
           </View>
 
           <View style={styles.section}>

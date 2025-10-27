@@ -1,8 +1,7 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Dimensions, Image, StyleSheet, Text, View } from "react-native";
+import { register as registerService } from "../../service/registroService";
 import ButtonBase from "../components/common/button/button";
 import InputBase from "../components/common/input/inputBase";
 import BirthDateInput from "../components/common/input/inputData";
@@ -59,8 +58,8 @@ export default function RegisterScreen2() {
   // map frontend labels to backend expected values
   let generoMapped = generoTrim;
   const g = generoTrim.toLowerCase();
-  if (g === "masculino") generoMapped = "homem";
-  else if (g === "feminino") generoMapped = "mulher";
+  if (g === "masculino") generoMapped = "masculino";
+  else if (g === "feminino") generoMapped = "feminino";
   else if (g === "outro") generoMapped = "outro";
     const telefoneSanitized = telefone.replace(/[^0-9+]/g, "").trim();
 
@@ -87,36 +86,15 @@ export default function RegisterScreen2() {
 
         console.log("Payload enviado para registro:", JSON.stringify(payload, null, 2));
 
-        const response = await axios.post(`${API_BASE_URL}/auth/register`, payload, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          timeout: 15000,
-        });
+        const response = await registerService(payload);
 
-        console.log("Resposta registro status:", response.status);
-        console.log("Resposta registro headers:", response.headers);
-        console.log("Resposta registro data:", response.data);
+        console.log("Resposta registro data:", response);
 
-        if (response.data && response.data.success) {
-          // salvar nome e email no AsyncStorage e marcar questionario pendente
-          try {
-            await AsyncStorage.setItem("email", String(params.email || ""));
-            await AsyncStorage.setItem("nome", String(nome || ""));
-            await AsyncStorage.setItem("questionario_pending", "true");
-            // se o backend retornou token já, salve para manter sessão
-            if (response.data.token) {
-              await AsyncStorage.setItem("token", String(response.data.token));
-            }
-          } catch (e) {
-            // ignore
-          }
-
+        if (response && response.success) {
           Alert.alert("Sucesso", "Registro realizado com sucesso!");
-          // depois do registro, ir para verificação de email (confirm-code)
           router.push({ pathname: "/auth/confirm-code", params: { email: String(params.email || "") } });
         } else {
-          setError(response.data.message || "Erro ao salvar perfil");
+          setError(response?.message || "Erro ao salvar perfil");
         }
     } catch (error: any) {
       console.log("Erro no registro (erro):", error);

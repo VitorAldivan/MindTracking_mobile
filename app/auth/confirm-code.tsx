@@ -2,9 +2,9 @@ import { Alert, Dimensions, Image, StyleSheet, Text, View } from "react-native";
 import Verification from "../components/common/input/inputCode";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
+import { sendRecoveryCode, verifyCode } from "../../service/verifyService";
 import ButtonBase from "../components/common/button/button";
 
 const { width, height } = Dimensions.get("window");
@@ -40,55 +40,34 @@ export default function LoginScreen() {
     setError("");
     setLoading(true);
     try {
-      const resp = await axios.post(`${API_BASE_URL}/auth/verify-email`, { email, codigo }, { headers: { "Content-Type": "application/json" }, timeout: 10000 });
-      console.log("verify resp:", resp.status, resp.data);
-      if (resp.data && resp.data.success) {
-        // optional: save token if returned
-        if (resp.data.token) {
-          await AsyncStorage.setItem("token", String(resp.data.token));
-        }
-        // Decide next route depending on the flow
+      const resp = await verifyCode(email, codigo);
+      console.log("verify resp:", resp);
+      if (resp && resp.success) {
+        if (resp.token) await AsyncStorage.setItem("token", String(resp.token));
         const from = String(params.from || "register");
-        if (from === "register") {
-          router.push("/auth/welcome");
-        } else if (from === "recover") {
-          // go to screen to set new password (recover flow)
-          router.push({ pathname: "/auth/redefined2", params: { email: String(email), from: "recover" } });
-        } else if (from === "change") {
-          // logged-in user changing password: go to redefined2 (will read email from storage)
-          router.push({ pathname: "/auth/redefined2", params: { from: "change" } });
-        } else {
-          // fallback
-          router.push("/auth/welcome");
-        }
+        if (from === "register") router.push("/auth/welcome");
+        else if (from === "recover") router.push({ pathname: "/auth/redefined2", params: { email: String(email), from: "recover" } });
+        else if (from === "change") router.push({ pathname: "/auth/redefined2", params: { from: "change" } });
+        else router.push("/auth/welcome");
       } else {
-        // Some backends may respond that the email is already verified (e.g. during account creation).
-        // If the user is in a recovery/change flow, treat a 'already verified' message as proceedable to password reset.
-        const msg = String(resp.data?.message || "");
+        const msg = String(resp?.message || "");
         const from = String(params.from || "register");
         const alreadyVerified = isAlreadyVerifiedMsg(msg);
         if ((from === "recover" || from === "change") && alreadyVerified) {
-          if (from === "recover") {
-            router.push({ pathname: "/auth/redefined2", params: { email: String(email), from: "recover" } });
-          } else {
-            router.push({ pathname: "/auth/redefined2", params: { from: "change" } });
-          }
+          if (from === "recover") router.push({ pathname: "/auth/redefined2", params: { email: String(email), from: "recover" } });
+          else router.push({ pathname: "/auth/redefined2", params: { from: "change" } });
         } else {
           setError(msg || "Código inválido");
         }
       }
     } catch (err: any) {
-      console.log("verify error:", err?.response?.data || err.message || err);
-      // If backend returns an error indicating 'already verified', and this is change/recover flow, allow proceeding
+      console.log("verify error:", err?.message || err);
       const from = String(params.from || "register");
-      const errMsg = err?.response?.data?.message || err.message || "Erro ao verificar código";
+      const errMsg = err?.message || "Erro ao verificar código";
       const alreadyVerified = isAlreadyVerifiedMsg(String(errMsg));
       if ((from === "recover" || from === "change") && alreadyVerified) {
-        if (from === "recover") {
-          router.push({ pathname: "/auth/redefined2", params: { email: String(email), from: "recover" } });
-        } else {
-          router.push({ pathname: "/auth/redefined2", params: { from: "change" } });
-        }
+        if (from === "recover") router.push({ pathname: "/auth/redefined2", params: { email: String(email), from: "recover" } });
+        else router.push({ pathname: "/auth/redefined2", params: { from: "change" } });
         return;
       }
       setError(errMsg);
@@ -117,22 +96,22 @@ export default function LoginScreen() {
       if (codeSent) return;
       setSendingCode(true);
       try {
-        const resp = await axios.post(`${API_BASE_URL}/auth/recuperar-senha`, { email }, { timeout: 10000 });
-        console.log("recuperar-senha (change) resp:", resp.status, resp.data);
-        if (resp.data && resp.data.success) {
+        const resp = await sendRecoveryCode(email);
+        console.log("recuperar-senha (change) resp:", resp);
+        if (resp && resp.success) {
           if (mounted) {
             setCodeSent(true);
-            Alert.alert("Sucesso", resp.data.message || "Código enviado para seu e-mail.");
+            Alert.alert("Sucesso", resp.message || "Código enviado para seu e-mail.");
           }
         } else {
           if (mounted) {
-            Alert.alert("Erro", resp.data?.message || "Não foi possível enviar o código.");
+            Alert.alert("Erro", resp?.message || "Não foi possível enviar o código.");
           }
         }
       } catch (err: any) {
-        console.log("recuperar-senha (change) error:", err?.response?.data || err.message || err);
+        console.log("recuperar-senha (change) error:", err?.message || err);
         if (mounted) {
-          Alert.alert("Erro", err?.response?.data?.message || "Erro ao enviar código");
+          Alert.alert("Erro", err?.message || "Erro ao enviar código");
         }
       } finally {
         if (mounted) setSendingCode(false);

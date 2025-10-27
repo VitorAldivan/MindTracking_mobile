@@ -1,5 +1,4 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -12,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { fetchQuestions as fetchQuestionsService, submitAnswers as submitAnswersService } from "../../service/questionarioService";
 
 const { width, height } = Dimensions.get("window");
 const API_BASE_URL = "http://44.220.11.145";
@@ -31,7 +31,9 @@ export default function Questionnaire() {
   const [submitting, setSubmitting] = useState(false);
 
   // animação da barra
-  const progressAnim = useRef(new Animated.Value(0)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current!;
+  // Animated.View sometimes confuses TS JSX types in this workspace; create a safe any alias
+  const AnimatedView: any = Animated.View;
 
   // animate progress when index or questions length change; progress = answeredCount / total
   useEffect(() => {
@@ -48,18 +50,15 @@ export default function Questionnaire() {
   // fetch questions from backend
   useEffect(() => {
     let mounted = true;
-    async function fetchQuestions() {
+    async function loadQuestions() {
       setLoading(true);
       try {
         const token = await AsyncStorage.getItem("token");
-        const perguntasEndpoint = mode === "diario" ? `${API_BASE_URL}/questionario/diario/perguntas` : `${API_BASE_URL}/questionario/perguntas`;
-        const resp = await axios.get(perguntasEndpoint, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          timeout: 10000,
-        });
-        if (mounted && resp?.data) {
+        const modeParam = mode === "diario" ? "diario" : undefined;
+        const resp = await fetchQuestionsService(modeParam);
+        if (mounted && resp) {
           // API may return { success:true, perguntas: [...] } or an array directly
-          const raw = Array.isArray(resp.data) ? resp.data : resp.data.perguntas ?? resp.data;
+          const raw = Array.isArray(resp) ? resp : (resp.perguntas ?? resp);
           if (Array.isArray(raw) && raw.length > 0) {
             setQuestions(
               raw.map((q: any, idx: number) => ({
@@ -79,11 +78,11 @@ export default function Questionnaire() {
       }
     }
 
-    fetchQuestions();
+    loadQuestions();
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [mode]);
 
   const handleNext = async () => {
     if (currentQuestionIndex < questions.length - 1) {
@@ -164,16 +163,19 @@ export default function Questionnaire() {
       const tryNetworkUser = async (tk?: string) => {
         if (!tk) return null;
         const candidates = [
-          `${API_BASE_URL}/auth/me`,
-          `${API_BASE_URL}/usuario/me`,
-          `${API_BASE_URL}/user/me`,
-          `${API_BASE_URL}/users/me`,
-          `${API_BASE_URL}/usuario`,
-          `${API_BASE_URL}/user`,
+          "/auth/me",
+          "/usuario/me",
+          "/user/me",
+          "/users/me",
+          "/usuario",
+          "/user",
         ];
-        for (const url of candidates) {
+        // import api lazily to avoid top-level cycle
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const api = require("../../service/api").default;
+        for (const endpoint of candidates) {
           try {
-            const res = await axios.get(url, { headers: { Authorization: `Bearer ${tk}` }, timeout: 5000 });
+            const res = await api.get(endpoint, { headers: { Authorization: `Bearer ${tk}` }, timeout: 5000 });
             if (res?.data) return res.data;
           } catch (_) {
             // ignore and try next
@@ -215,10 +217,7 @@ export default function Questionnaire() {
 
       if (usuarioId) body.usuario_id = Number(usuarioId);
 
-      const responderEndpoint = mode === "diario" ? `${API_BASE_URL}/questionario/diario/responder` : `${API_BASE_URL}/questionario/responder`;
-      await axios.post(responderEndpoint, body, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+  await submitAnswersService(body, mode);
 
       // on success
       await AsyncStorage.removeItem("questionario_pending");
@@ -257,7 +256,7 @@ await AsyncStorage.setItem("diario_show_modal", "true");
         </View>
 
         <View style={styles.progressContainer}>
-          <Animated.View
+          <AnimatedView
             style={[
               styles.progressBar,
               {

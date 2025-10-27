@@ -1,9 +1,9 @@
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, useFonts } from "@expo-google-fonts/inter";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
+import { setupInterceptors } from "../service/api";
 import BottomNavbar from "./components/navbar/navbar";
 
 SplashScreen.preventAutoHideAsync();
@@ -52,47 +52,17 @@ export default function RootLayout() {
     if (fontsLoaded) checkToken();
   }, [fontsLoaded, router]);
 
-  // Setup axios interceptors once: attach token to requests and handle 401 globally
+  // Setup axios interceptors once via shared service (attaches token and handles 401)
   useEffect(() => {
-    const reqId = axios.interceptors.request.use(
-      async (config) => {
-        try {
-          const token = await AsyncStorage.getItem("token");
-          if (token) {
-            (config.headers as any) = {
-              ...(config.headers || {}),
-              Authorization: `Bearer ${token}`,
-            };
-          }
-        } catch (e) {
-          // ignore
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
-
-    const resId = axios.interceptors.response.use(
-      (res) => res,
-      async (error) => {
-        try {
-          if (error?.response?.status === 401) {
-            await AsyncStorage.removeItem("token");
-            // redirect to login screen via router
-            router.replace("/auth/login");
-          }
-        } catch (e) {
-          // ignore
-        }
-        return Promise.reject(error);
-      }
-    );
-
+    const cleanup = setupInterceptors(router);
     return () => {
-      axios.interceptors.request.eject(reqId);
-      axios.interceptors.response.eject(resId);
+      try {
+        cleanup();
+      } catch (e) {
+        // ignore
+      }
     };
-  }, []);
+  }, [router]);
 
   if (!fontsLoaded) {
     return null; 

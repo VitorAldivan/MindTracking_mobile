@@ -1,8 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Alert, Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { resetPassword } from "../../service/passwordService";
 import ButtonBase from "../components/common/button/button";
 import InputBase from "../components/common/input/inputBase"; // seu input já pronto
 // Pega altura e largura da tela
@@ -37,7 +37,6 @@ export default function LoginScreen() {
     }
     setLoading(true);
     try {
-      // Prefer email from AsyncStorage (logged-in user), otherwise fallback to param (recover flow)
       let emailToSend = (await AsyncStorage.getItem("email")) || emailParam || "";
       if (!emailToSend) {
         Alert.alert("Erro", "Email não disponível. Volte e tente novamente.");
@@ -46,26 +45,19 @@ export default function LoginScreen() {
       }
 
       const payload: any = { email: emailToSend, senha, confirmarSenha: confirmSenha };
-      // include auth token if present (for logged-in users)
-      const token = await AsyncStorage.getItem("token");
-      const headers: any = { "Content-Type": "application/json" };
-      if (token) headers.Authorization = `Bearer ${token}`;
-
-      const resp = await axios.post(`${API_BASE_URL}/auth/redefinir-senha`, payload, { timeout: 10000, headers });
-      if (resp.data && resp.data.success) {
+      const resp = await resetPassword(payload);
+      if (resp && resp.success) {
         if (fromParam === "change") {
-          // voltar para perfil
           router.replace("/(tabs)/perfil");
         } else {
-          // recover flow -> volta para login
           router.replace("/auth/login");
         }
       } else {
-        Alert.alert("Erro", resp.data?.message || "Erro ao redefinir senha");
+        Alert.alert("Erro", resp?.message || "Erro ao redefinir senha");
       }
     } catch (err: any) {
-      console.log("redefinir-senha error:", err?.response?.data || err.message || err);
-      Alert.alert("Erro", err?.response?.data?.message || "Erro ao redefinir senha");
+      console.log("redefinir-senha error:", err?.message || err);
+      Alert.alert("Erro", err?.message || "Erro ao redefinir senha");
     } finally {
       setLoading(false);
     }

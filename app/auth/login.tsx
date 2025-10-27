@@ -1,15 +1,12 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { login as loginService } from "../../service/loginService";
 import ButtonBase from "../components/common/button/button";
 import ButtonBase2 from "../components/common/button/button2";
 import InputBase from "../components/common/input/inputBase";
 
 const { width, height } = Dimensions.get("window");
-
-const API_BASE_URL = "http://44.220.11.145";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -22,93 +19,16 @@ export default function LoginScreen() {
       Alert.alert("Erro", "Por favor, preencha email e senha.");
       return;
     }
-
     setLoading(true);
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
-        email,
-        senha,
-      });
-
-      if (response.data && response.data.token) {
-        await AsyncStorage.setItem("token", response.data.token);
-        // save email for profile display
-        try {
-          await AsyncStorage.setItem("email", email);
-        } catch (e) {
-          // ignore
-        }
-
-        // Decode token locally to extract payload (nome, email) if backend includes them in JWT
-        try {
-          const decodeJwt = (token: string) => {
-            try {
-              const parts = token.split('.');
-              if (parts.length !== 3) return null;
-              const payload = parts[1];
-              const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-              let json = null as string | null;
-              const atobFn = (global as any).atob || (globalThis as any).atob;
-              if (typeof atobFn === 'function') { 
-                // atob exists
-                const decoded = atobFn(base64);
-                json = decodeURIComponent(
-                  Array.prototype.map
-                    .call(decoded, function (c: string) {
-                      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                    })
-                    .join('')
-                );
-              } else if (typeof (global as any).Buffer !== 'undefined') { 
-                json = (global as any).Buffer.from(base64, 'base64').toString('utf8');
-              } else {
-                return null;
-              }
-              if (!json) return null;
-              return JSON.parse(json);
-            } catch (err) {
-              return null;
-            }
-          };
-
-          const payload = decodeJwt(response.data.token);
-          if (payload) {
-            if (payload.nome) {
-              try {
-                await AsyncStorage.setItem('nome', String(payload.nome));
-              } catch (e) {
-                // ignore
-              }
-            }
-            if (payload.email) {
-              try {
-                await AsyncStorage.setItem('email', String(payload.email));
-              } catch (e) {
-                // ignore
-              }
-            }
-          } else {
-            // fallback: if backend returned nome in top-level response (older implementation), persist it
-            if (response.data.nome) {
-              try {
-                await AsyncStorage.setItem('nome', String(response.data.nome));
-              } catch (e) {
-                // ignore
-              }
-            }
-          }
-        } catch (e) {
-          // ignore decoding errors
-        }
-        router.push("/(tabs)/home");
-      } else {
-        Alert.alert("Erro", "Resposta inesperada do servidor.");
-      }
+      await loginService(email, senha);
+      router.push("/(tabs)/home");
     } catch (error: any) {
-      console.log(error.response?.data || error.message);
-      Alert.alert("Erro", error.response?.data?.message || "Erro ao fazer login");
+      console.log(error?.message || error);
+      Alert.alert("Erro", error?.message || "Erro ao fazer login");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

@@ -63,13 +63,14 @@ export default function Dashboard() {
 
         <CorrelationsCard
           items={[
-            { icon: require('@assets/icons/diario.png'), color: '#16A34A', text: 'Dias com 7h+ de sono: 4 dias' },
-            { icon: require('@assets/icons/apoio.png'), color: '#E11D48', text: 'Menos ansiedade após 3 dias de diário' },
+            { icon: require('@assets/icons/joiaverde.png'), color: '#16A34A', text: 'Dias com 7h+ de sono: 4 dias' },
+            { icon: require('@assets/icons/joiavermelho.png'), color: '#E11D48', text: 'Menos ansiedade após 3 dias de diário' },
+            { icon: require('@assets/icons/joiaverde.png'), color: '#16A34A', text: 'Dias com alimentação saúdavel: 7 dias ' },
           ]}
         />
 
         <GraficoCard 
-            data={[6, 3, 5, 7, 2, 10, 9]}
+            data={[2, 10, 1, 8, 3, 10, 8]}
             color="#38BDF8"
             title="Seu Bem-Estar Esta Semana"
             title2="Média: 6.8  | Melhor dia: 8.0 (qui)"

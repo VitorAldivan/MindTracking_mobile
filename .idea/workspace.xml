@@ -7,6 +7,7 @@
     <list default="true" id="5dc65422-c523-4db1-8e78-65da04a7df45" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+<<<<<<< HEAD
       <change beforePath="$PROJECT_DIR$/app/(tabs)/alterarfoto.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/alterarfoto.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/(tabs)/dashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/dashboard.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/(tabs)/diario.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/diario.tsx" afterDir="false" />
@@ -23,6 +24,10 @@
       <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/service/auth.tsx" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/tsconfig.json" beforeDir="false" afterPath="$PROJECT_DIR$/tsconfig.json" afterDir="false" />
+=======
+      <change beforePath="$PROJECT_DIR$/app/(tabs)/dashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/dashboard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/components/cards/grafico.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/components/cards/grafico.tsx" afterDir="false" />
+>>>>>>> 14498a246866595addac41abc931a26323146089
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,7 +59,11 @@
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
     "git-widget-placeholder": "main",
+<<<<<<< HEAD
     "last_opened_file_path": "C:/Users/aldiv/OneDrive/Desktop/codar/PROJETOS/MindTracking_mobile",
+=======
+    "last_opened_file_path": "C:/Users/SEDUC DEST2/MindTracking_mobile",
+>>>>>>> 14498a246866595addac41abc931a26323146089
     "settings.editor.selected.configurable": "AndroidSdkUpdater"
   }
 }]]></component>

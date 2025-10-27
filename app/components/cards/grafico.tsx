@@ -1,12 +1,13 @@
 import * as d3 from 'd3';
 import { useState } from "react";
 import { Text, View } from "react-native";
-import { G, Line, Path, Svg, Text as SvgText } from "react-native-svg";
+import { G, Line, Path, Svg, Text as SvgText, Image as SvgImage } from "react-native-svg";
+const bolinhaSrc = require("assets/icons/bolinha.png");
 import LegendNode from '../../../assets/icons/LegendNode.svg';
 import { styles } from "./styles";
 
 type GraficoCardProps = {
-  data: number[]
+  data: number[]            // Passe os dados vindos da sua API aqui!
   color: string 
   title: string
   title2: string
@@ -27,6 +28,7 @@ export function GraficoCard(props: GraficoCardProps) {
   const height = width * CHART_ASPECT_RATIO;
   const chartHeight = height - 30;
 
+  // Responsivo: usando props, pronto para API
   const labelsX = props.xLabels.slice(0, 7);
   const data = props.data.slice(0, 7);
 
@@ -37,20 +39,24 @@ export function GraficoCard(props: GraficoCardProps) {
     .domain([0, data.length - 1])
     .range([LABEL_GRAPH_PADDING, chartWidth - LABEL_GRAPH_PADDING]);
 
-  const yScale = d3.scaleLinear().domain([0, 10]).range([chartHeight, 0]);
+  // Responsivo, topo nunca corta/max
+  const yScale = d3.scaleLinear().domain([-0.5, 10.5]).range([chartHeight, 0]);
 
+  // *** Para mudar curvatura, altere o valor aqui: ***
+  // Ex: .curve(d3.curveCardinal.tension(0.8)) para mais suave, .curve(d3.curveCardinal.tension(0)) para padrão
+  const curveTension = 0.3;  // <--- Altere facilmente para o valor desejado!
   const linefn = d3
     .line<number>()
     .y((d) => yScale(d))
     .x((_, i) => xScale(i))
-    .curve(d3.curveCardinal.tension(0));
+    .curve(d3.curveCardinal.tension(curveTension));
 
   const areafn = d3
     .area<number>()
     .x((_, i) => xScale(i))
     .y0(chartHeight)
     .y1((d) => yScale(d))
-    .curve(d3.curveCardinal.tension(0));
+    .curve(d3.curveCardinal.tension(curveTension));
 
   const svgLine = linefn(data) ?? "";
   const svgArea = areafn(data) ?? "";
@@ -62,7 +68,6 @@ export function GraficoCard(props: GraficoCardProps) {
         <Text style={styles.title2}>{props.title2}</Text>
       </View>
       <View style={{ flexDirection: 'row', marginTop: 6 }}>
-        {/* Números do eixo Y */}
         <View style={{
           width: Y_AXIS_WIDTH,
           height: chartHeight,
@@ -93,7 +98,6 @@ export function GraficoCard(props: GraficoCardProps) {
             viewBox={`0 0 ${chartWidth} ${chartHeight + 30}`}
           >
             <G>
-              {/* Grade horizontal */}
               {yTicks.map((tick, idx) => (
                 <Line
                   key={`h-${idx}`}
@@ -106,7 +110,6 @@ export function GraficoCard(props: GraficoCardProps) {
                   strokeDasharray={[4, 4]}
                 />
               ))}
-              {/* Grade vertical */}
               {xTicks.map((tick, idx) => (
                 <Line
                   key={`v-${idx}`}
@@ -119,12 +122,20 @@ export function GraficoCard(props: GraficoCardProps) {
                   strokeDasharray={[4, 4]}
                 />
               ))}
-              {/* Área do gráfico */}
               <Path d={svgArea} stroke="none" fill={props.color} opacity={0.1} />
-              {/* Linha */}
               <Path d={svgLine} stroke="blue" fill="none" strokeWidth={2}/>
-              {/* Pontos sobre cada valor */}
-              {/* Eixo X (labels) */}
+              {data.map((value, idx) => (
+                <SvgImage
+                  key={idx}
+                  href={bolinhaSrc}
+                  x={xScale(idx) - 6.5}
+                  y={yScale(value) - 6.5}
+                  width={13}
+                  height={13}
+                  opacity={1}
+                  preserveAspectRatio="xMidYMid slice"
+                />
+              ))}
               {labelsX.map((label, idx) => (
                 <SvgText
                   key={idx}
@@ -141,7 +152,6 @@ export function GraficoCard(props: GraficoCardProps) {
           </Svg>
         </View>
       </View>
-      {/* Legenda abaixo do gráfico */}
       <View style={{
         flexDirection: 'row',
         alignItems: 'center',

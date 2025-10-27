@@ -44,7 +44,7 @@ export default function Dashboard() {
         />
 
         <GraficoCard 
-            data={[6, 3, 5, 7, 2, 10, 9]}
+            data={[2, 10, 1, 8, 3, 10, 8]}
             color="#38BDF8"
             title="Seu Bem-Estar Esta Semana"
             title2="Média: 6.8  | Melhor dia: 8.0 (qui)"

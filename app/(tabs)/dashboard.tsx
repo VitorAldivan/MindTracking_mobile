@@ -39,6 +39,7 @@ export default function Dashboard() {
           items={[
             { icon: require('@assets/icons/diario.png'), color: '#16A34A', text: 'Dias com 7h+ de sono: 4 dias' },
             { icon: require('@assets/icons/apoio.png'), color: '#E11D48', text: 'Menos ansiedade após 3 dias de diário' },
+            { icon: require('@assets/icons/apoio.png'), color: '#E11D48', text: 'Dias com alimentação saúdavel: 7 dias ' },
           ]}
         />
 

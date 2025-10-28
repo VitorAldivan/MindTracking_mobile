@@ -10,11 +10,20 @@ type DiarioType = {
 };
 
 export default function CardDiario({ diario, onAnalyze }: { diario: DiarioType; onAnalyze?: () => void }) {
+  const displayDate = (() => {
+    if (diario.data && String(diario.data).trim().length > 0) return String(diario.data);
+    try {
+      return new Date().toLocaleString();
+    } catch (e) {
+      return String(diario.data ?? "");
+    }
+  })();
+
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>{diario.titulo}</Text>
-        <Text style={styles.cardDate}>{diario.data}</Text>
+        <Text style={styles.cardDate}>{displayDate}</Text>
       </View>
 
       <Text style={styles.cardText}>{diario.texto}</Text>

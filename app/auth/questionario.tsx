@@ -54,6 +54,18 @@ export default function Questionnaire() {
       setLoading(true);
       try {
         const token = await AsyncStorage.getItem("token");
+        // if there's no token, avoid calling protected endpoints and redirect to login
+        if (!token) {
+          console.log("Token não fornecido - redirecionando para login");
+          if (mounted) setLoading(false);
+          try {
+            router.replace("/auth/login");
+          } catch (e) {
+            // ignore if router unavailable
+          }
+          return;
+        }
+
         const modeParam = mode === "diario" ? "diario" : undefined;
         const resp = await fetchQuestionsService(modeParam);
         if (mounted && resp) {

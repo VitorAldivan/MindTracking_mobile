@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import { Dimensions, Image, LayoutChangeEvent, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { AthenaCard, CorrelationsCard, ExportarJornadaCard, InfoCard, StatCard } from "../components/cards/cardDashboard1";
 import { GraficoCard } from "../components/cards/grafico";
@@ -9,9 +9,11 @@ const { width, height } = Dimensions.get("window");
 
 export default function Dashboard() {
   const router = useRouter();
+  const [headerHeight, setHeaderHeight] = useState(0);
 
-  const onHeaderLayout = (_event: LayoutChangeEvent) => {
-    // placeholder: if you need header measurements later, handle them here
+  const onHeaderLayout = (event: LayoutChangeEvent) => {
+    const h = (event as any)?.nativeEvent?.layout?.height ?? (event as any)?.layout?.height ?? 0;
+    setHeaderHeight(h);
   };
   return (
     <View style={styles.container}>
@@ -25,18 +27,21 @@ export default function Dashboard() {
                 </TouchableOpacity>
       
                 <View style={styles.textContainer}>
-                  <Text style={styles.perfilText}>Meus Diários</Text>
+                  <Text style={styles.perfilText}>Dashboard</Text>
                 </View>
       
                 <View style={{ width: width * 0.09 }} />
               </View>
       
               <Text style={styles.titleLarge}>
-                Seu refúgio de pensamentos seguros
+                Seu dashboard de clareza
               </Text>
             </View>
       <ScrollView
-        contentContainerStyle={styles.cardsWrapper}
+        contentContainerStyle={[
+          styles.cardsWrapper,
+          { paddingTop: headerHeight + height * 0.02 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
        

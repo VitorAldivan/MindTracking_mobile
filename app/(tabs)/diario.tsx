@@ -38,6 +38,76 @@ export default function Diario() {
   const [diarios, setDiarios] = useState<DiarioItem[]>([]);
   const [headerHeight, setHeaderHeight] = useState<number>(0);
 
+  // Normaliza várias formas de resposta da API para um array de diários consistentes
+  const normalizeDiarios = (resp: any): DiarioItem[] => {
+    if (!resp) return [];
+
+    // extrai array de várias possíveis propriedades
+    let arr: any[] = [];
+    if (Array.isArray(resp)) arr = resp;
+    else if (Array.isArray(resp.data)) arr = resp.data;
+    else if (Array.isArray(resp.entradas)) arr = resp.entradas;
+    else if (Array.isArray(resp.entrada)) arr = resp.entrada;
+    else if (Array.isArray(resp.results)) arr = resp.results;
+    else if (typeof resp === 'object' && Object.keys(resp).length > 0) {
+      // às vezes a API retorna um objeto único em vez de array
+      // verificar se tem propriedade 'entrada' com objeto único
+      if (resp.entrada && !Array.isArray(resp.entrada)) arr = [resp.entrada];
+      else if (resp.data && !Array.isArray(resp.data) && typeof resp.data === 'object') arr = [resp.data];
+    }
+
+    // mapear cada item para o formato esperado pelo app
+    return arr.map((it: any) => {
+      const src = it?.entrada ?? it?.diario ?? it;
+      const _id = src?._id ?? src?.id ?? src?.ID ?? String(src?.id ?? src?._id ?? "");
+      const titulo = src?.titulo ?? src?.title ?? src?.name ?? "";
+      const texto = src?.texto ?? src?.text ?? src?.body ?? "";
+      const dataRaw = src?.data ?? src?.data_hora ?? src?.createdAt ?? src?.created_at ?? src?.date ?? src?.dataHora ?? "";
+      let data = "";
+      try {
+        if (dataRaw) {
+          const d = new Date(dataRaw);
+          data = !Number.isNaN(d.getTime()) ? d.toLocaleString() : String(dataRaw);
+        }
+      } catch (e) {
+        data = String(dataRaw ?? "");
+      }
+      return { _id, titulo, texto, data } as DiarioItem;
+    });
+  };
+
+  // Remove possíveis duplicatas (por _id quando disponível, caso contrário por hash de conteúdo)
+  const dedupeDiarios = (items: DiarioItem[]): DiarioItem[] => {
+    // If items have reliable _id fields, dedupe by _id only.
+    const haveIds = items.some((it) => !!(it._id ?? it.id));
+    if (haveIds) {
+      const seen = new Map<string, DiarioItem>();
+      for (const it of items) {
+        const key = String(it._id ?? it.id ?? "");
+        if (!seen.has(key)) seen.set(key, it);
+      }
+      return Array.from(seen.values());
+    }
+
+    // If there are no ids, assume items are unique and return as-is to avoid collapsing
+    // legitimately identical content from different days.
+    return items.slice();
+  };
+
+  // Ordena diários pela data (mais recente primeiro). Items com data inválida ficam por último.
+  const sortDiarios = (items: DiarioItem[]): DiarioItem[] => {
+    return items.slice().sort((a, b) => {
+      const parse = (s?: string) => {
+        if (!s) return 0;
+        const t = Date.parse(String(s));
+        return Number.isNaN(t) ? 0 : t;
+      };
+      const ta = parse(a.data);
+      const tb = parse(b.data);
+      return tb - ta;
+    });
+  };
+
   // Estados de modais
   const [modalAnaliseVisivel, setModalAnaliseVisivel] = useState(false);   // imagem 1
   const [modalEscritaVisivel, setModalEscritaVisivel] = useState(false);   // imagem 2
@@ -58,10 +128,9 @@ export default function Diario() {
     async function loadDiarios() {
       try {
         const resp = await diarioService.getAllDiarios();
-        // resp may be an array or an object containing data; be defensive
-        const list = Array.isArray(resp) ? resp : resp?.data ?? [];
+        const list = normalizeDiarios(resp);
         // if server returned nothing, fall back to example diaries so UI can be tested
-        if (mounted) setDiarios(list && list.length ? list : diariosFake);
+        if (mounted) setDiarios(list && list.length ? dedupeDiarios(list) : diariosFake);
       } catch (e) {
         // fallback to example diaries on error
         if (mounted) setDiarios(diariosFake);
@@ -117,6 +186,11 @@ export default function Diario() {
 
   // New: robust renderItem and keyExtractor to handle server-returned shapes
   const keyExtractorById = useCallback((item: DiarioItem, index: number) => String(item._id ?? item.id ?? index), []);
+  // Ensure keys are unique by appending index if necessary
+  const safeKeyExtractor = useCallback((item: DiarioItem, index: number) => {
+    const base = String(item._id ?? item.id ?? "");
+    return base ? `${base}-${index}` : String(index);
+  }, []);
 
   const renderDiarioItem = useCallback(({ item }: { item: DiarioItem }) => {
     const titulo = item.titulo ?? (item as any).title ?? (item as any).name ?? "";
@@ -188,21 +262,27 @@ export default function Diario() {
         if (Array.isArray(resp)) {
           // ignore
         } else if (resp._id || resp.id || (resp.titulo && resp.texto)) {
+          // API returned the created object at top level
           created = resp;
         } else if (resp.data && (resp.data._id || resp.data.id || (resp.data.titulo && resp.data.texto))) {
+          // API returned envelope with data
           created = resp.data;
         } else if ((resp as any).diario && ((resp as any).diario._id || (resp as any).diario.id)) {
+          // older envelope naming
           created = (resp as any).diario;
+        } else if ((resp as any).entrada && ((resp as any).entrada._id || (resp as any).entrada.id || (resp as any).entrada.titulo)) {
+          // handle backend that returns { entrada: { ... } }
+          created = (resp as any).entrada;
         }
       }
 
       if (created) {
         const mapped = {
-          _id: created._id ?? created.id,
+          _id: created._id ?? created.id ?? created._id ?? String((created as any).id ?? (created as any)._id ?? ""),
           titulo: created.titulo ?? created.title ?? "",
           texto: created.texto ?? created.text ?? created.body ?? "",
           data: (() => {
-            const raw = created.data ?? created.createdAt ?? created.date ?? "";
+            const raw = created.data ?? created.createdAt ?? created.date ?? created.data_hora ?? created.dataHora ?? "";
             try {
               if (!raw) return "";
               const d = new Date(raw);
@@ -213,17 +293,17 @@ export default function Diario() {
           })(),
         } as DiarioItem;
 
-  setDiarios((prev: DiarioItem[]) => [mapped, ...prev]);
+        setDiarios((prev: DiarioItem[]) => dedupeDiarios([mapped, ...prev]));
       }
 
       // show success alert with optional server message
       Alert.alert('Sucesso', resp?.message || 'Diário enviado com sucesso');
 
-      // Refresh list
+      // Refresh list (normalizando diferentes formatos de resposta)
       try {
         const all = await diarioService.getAllDiarios();
-        const list = Array.isArray(all) ? all : all?.data ?? [];
-        setDiarios(list);
+        const list = normalizeDiarios(all);
+        if (list && list.length) setDiarios(dedupeDiarios(list));
       } catch (err) {
         // ignore refresh errors
       }
@@ -251,10 +331,10 @@ export default function Diario() {
           // Try to fetch today's diary from server and show it in the analysis modal.
           try {
             const all = await diarioService.getAllDiarios();
-            const list = Array.isArray(all) ? all : all?.data ?? [];
+            const allList = normalizeDiarios(all);
             const today = new Date().toISOString().slice(0, 10);
-            const found = (list as any[]).find((d: any) => {
-              const raw = d.data ?? d.createdAt ?? d.created_at ?? d.date ?? "";
+            const found = (allList as any[]).find((d: any) => {
+              const raw = d.data ?? "";
               if (!raw) return false;
               try {
                 const day = new Date(raw).toISOString().slice(0, 10);
@@ -329,7 +409,7 @@ export default function Diario() {
           { paddingTop: headerHeight },
         ]}
   data={diarios}
-  keyExtractor={keyExtractorById}
+  keyExtractor={safeKeyExtractor}
   renderItem={renderDiarioItem}
         ItemSeparatorComponent={ItemSeparator}
         ListFooterComponent={ListFooter}
@@ -387,14 +467,31 @@ export default function Diario() {
 
             <Text style={styles.modalLabel}>
               Emoção predominante:
-              <Text style={styles.modalEmphasis}> Ansiedade</Text>
+              <Text style={styles.modalEmphasis}>
+                {" "}
+                {(
+                  (selectedDiario as any)?.emocao_predominante
+                  ?? (selectedDiario as any)?.emocaoPredominante
+                  ?? (selectedDiario as any)?.entrada?.emocao_predominante
+                  ?? (selectedDiario as any)?.entrada?.emocaoPredominante
+                  ?? (selectedDiario as any)?.emocao
+                  ?? "-"
+                ).toString()}
+              </Text>
             </Text>
 
             <Text style={styles.modalQuoteLabel}>
               Athena diz:
               <Text style={styles.modalQuote}>
                 {" "}
-                “Você parece sobrecarregado. Respire fundo e tire um tempo para você.”
+                {(
+                  (selectedDiario as any)?.comentario_athena
+                  ?? (selectedDiario as any)?.comentarioAthena
+                  ?? (selectedDiario as any)?.entrada?.comentario_athena
+                  ?? (selectedDiario as any)?.entrada?.comentarioAthena
+                  ?? (selectedDiario as any)?.comentario
+                  ?? "A análise ainda não está disponível."
+                ).toString()}
               </Text>
             </Text>
           </View>

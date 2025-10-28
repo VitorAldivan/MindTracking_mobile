@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import {
   Dimensions,
   Image,
@@ -14,53 +14,60 @@ import {
 import FeatureCard from "../components/cards/card1";
 import InfoCard from "../components/cards/card2";
 
-
 const { width, height } = Dimensions.get("window");
+
+// Arrays para nomes em português
+const diasSemana = ['Domingo', 'Segunda-Feira', 'Terça-Feira', 'Quarta-Feira', 'Quinta-Feira', 'Sexta-Feira', 'Sábado'];
+const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
 export default function Dashboard() {
   const router = useRouter();
   const [done, setDone] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  // on mount, read diario completion state and optional modal flag
-  
+  // Adiciona estado para data atual do sistema
+  const [currentDate, setCurrentDate] = useState(new Date());
 
-// substitua o useEffect
-useFocusEffect(
-  useCallback(() => {
-    let active = true;
-    (async () => {
-      try {
-        const last = await AsyncStorage.getItem("diario_last_done");
-        const showFlag = await AsyncStorage.getItem("diario_show_modal");
-        const today = new Date().toISOString().slice(0, 10);
+  useEffect(() => {
+    // Atualiza a cada minuto para garantir troca automática do dia
+    const interval = setInterval(() => {
+      setCurrentDate(new Date());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
-        if (active) {
-          setDone(last === today);
-          if (showFlag === "true") {
-            setShowModal(true);
-            await AsyncStorage.removeItem("diario_show_modal");
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      (async () => {
+        try {
+          const last = await AsyncStorage.getItem("diario_last_done");
+          const showFlag = await AsyncStorage.getItem("diario_show_modal");
+          const today = new Date().toISOString().slice(0, 10);
+
+          if (active) {
+            setDone(last === today);
+            if (showFlag === "true") {
+              setShowModal(true);
+              await AsyncStorage.removeItem("diario_show_modal");
+            }
           }
+        } catch (e) {
+          console.log("Erro ao ler estado diário:", e);
         }
-      } catch (e) {
-        console.log("Erro ao ler estado diário:", e);
-      }
-    })();
+      })();
 
-    return () => {
-      active = false;
-    };
-  }, [])
-);
-
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
 
   const handleCardPress = () => {
-    // if user hasn't done today's check-in, open the questionnaire in 'diario' mode
     if (!done) {
       router.push({ pathname: "/auth/questionario", params: { mode: "diario" } });
       return;
     }
-    // if already done, show info modal
     setShowModal(true);
   };
 
@@ -68,6 +75,11 @@ useFocusEffect(
     setDone(true);
     setShowModal(false);
   };
+
+  // Formatação dinâmica das datas para o topo
+  const diaSemana = diasSemana[currentDate.getDay()];
+  const dia = currentDate.getDate();
+  const mes = meses[currentDate.getMonth()];
 
   return (
     <>
@@ -77,10 +89,10 @@ useFocusEffect(
           <View style={styles.header}>
             <View style={{ flexShrink: 1 }}>
               <Text style={styles.day} numberOfLines={1} ellipsizeMode="tail">
-                Segunda-Feira
+                {diaSemana}
               </Text>
               <Text style={styles.date} numberOfLines={1} ellipsizeMode="tail">
-                11 de Junho
+                {dia} de {mes}
               </Text>
             </View>
             <Image
@@ -102,6 +114,7 @@ useFocusEffect(
           <View style={styles.actionRow}>
             <FeatureCard variant="checkin" done={done} onPress={handleCardPress} />
             <FeatureCard variant="athena" onPress={() => router.push('/(tabs)/ia')} />
+
           </View>
 
           <View style={styles.section}>
@@ -148,7 +161,6 @@ useFocusEffect(
               check-in.{"\n"}Um novo dia trará uma nova oportunidade para se
               conectar consigo mesmo(a).
             </Text>
-
             <TouchableOpacity
               style={styles.modalButton}
               onPress={handleConfirm}
@@ -236,14 +248,12 @@ const styles = StyleSheet.create({
     marginBottom: height * 0.02,
     overflow: "hidden",
   },
-
   navbarWrapper: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
   },
-
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.6)",

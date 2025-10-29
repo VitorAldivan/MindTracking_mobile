@@ -92,7 +92,8 @@ export default function RegisterScreen2() {
 
         if (response && response.success) {
           Alert.alert("Sucesso", "Registro realizado com sucesso!");
-          router.push({ pathname: "/auth/confirm-code", params: { email: String(params.email || "") } });
+          // pass the password along so confirm-code can attempt automatic login after verification
+          router.push({ pathname: "/auth/confirm-code", params: { email: String(params.email || ""), senha } });
         } else {
           setError(response?.message || "Erro ao salvar perfil");
         }

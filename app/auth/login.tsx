@@ -24,8 +24,24 @@ export default function LoginScreen() {
       await loginService(email, senha);
       router.push("/(tabs)/home");
     } catch (error: any) {
-      console.log(error?.message || error);
-      Alert.alert("Erro", error?.message || "Erro ao fazer login");
+      const msg = error?.message || String(error);
+      console.log(msg);
+
+      // detect common "not verified" messages (pt/en) and server phrases like
+      // "Por favor, verifique seu e-mail antes de fazer login" or
+      // "Um novo código de verificação foi enviado para seu e-mail"
+      const normalized = String(msg || "").toLowerCase();
+      const isNotVerified = /na[oã]o\s+verif|nao\s+verif|na[oã]o\s+verificado|nao\s+verificado|not\s+verified|unverified|conta\s+na[oã]o\s+verificada|account\s+not\s+verified|user\s+not\s+verified|por\s+favor.*verif|verifique.*e-?mail|verifica[çc][ãa]o|codigo\s+de\s+verifica|novo\s+codigo|please.*verify|verify\s+your|check\s+your\s+email/i.test(
+        normalized
+      );
+
+      if (isNotVerified) {
+        // redirect user to the confirmation screen so they can verify their account
+        router.push({ pathname: "/auth/confirm-code", params: { email, from: "register" } });
+        return;
+      }
+
+      Alert.alert("Erro", msg || "Erro ao fazer login");
     } finally {
       setLoading(false);
     }

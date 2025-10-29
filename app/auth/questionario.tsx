@@ -54,9 +54,10 @@ export default function Questionnaire() {
       setLoading(true);
       try {
         const token = await AsyncStorage.getItem("token");
-        // if there's no token, avoid calling protected endpoints and redirect to login
-        if (!token) {
-          console.log("Token não fornecido - redirecionando para login");
+        // Only force-login for protected flows (e.g. daily questionnaire).
+        // Allow the initial onboarding questionnaire to be taken without auth.
+        if (!token && mode === "diario") {
+          console.log("Token não fornecido para modo diario - redirecionando para login");
           if (mounted) setLoading(false);
           try {
             router.replace("/auth/login");

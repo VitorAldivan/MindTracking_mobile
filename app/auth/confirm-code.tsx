@@ -1,10 +1,11 @@
-import { Alert, Dimensions, Image, StyleSheet, Text, View } from "react-native";
+import { Alert, BackHandler, Dimensions, Image, StyleSheet, Text, View } from "react-native";
 import Verification from "../components/common/input/inputCode";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { sendRecoveryCode, verifyCode } from "../../service/verifyService";
+import { login as loginService } from "../../service/loginService";
 import ButtonBase from "../components/common/button/button";
 
 const { width, height } = Dimensions.get("window");
@@ -43,12 +44,26 @@ export default function LoginScreen() {
       const resp = await verifyCode(email, codigo);
       console.log("verify resp:", resp);
       if (resp && resp.success) {
-        if (resp.token) await AsyncStorage.setItem("token", String(resp.token));
+        if (resp.token) {
+          await AsyncStorage.setItem("token", String(resp.token));
+        } else {
+          // If backend didn't return a token, try automatic login using senha passed from registration
+          const senhaParam = String(params.senha || params.password || "");
+          if (senhaParam && email) {
+            try {
+              // loginService stores token in AsyncStorage when successful
+              await loginService(email, senhaParam);
+              console.log("Autologin successful after verify");
+            } catch (loginErr) {
+              console.log("Autologin failed after verify:", loginErr);
+            }
+          }
+        }
         const from = String(params.from || "register");
-        if (from === "register") router.push("/auth/welcome");
+  if (from === "register") router.replace("/auth/welcome");
         else if (from === "recover") router.push({ pathname: "/auth/redefined2", params: { email: String(email), from: "recover" } });
         else if (from === "change") router.push({ pathname: "/auth/redefined2", params: { from: "change" } });
-        else router.push("/auth/welcome");
+  else router.replace("/auth/welcome");
       } else {
         const msg = String(resp?.message || "");
         const from = String(params.from || "register");
@@ -123,6 +138,32 @@ export default function LoginScreen() {
       mounted = false;
     };
   }, []);
+
+  // If this confirmation screen was reached from registration flow,
+  // force any back action (hardware or header) to go to the login screen.
+  useEffect(() => {
+    let mounted = true;
+    const from = String(params.from || "");
+    if (from !== "register") return;
+
+    const onBackPress = () => {
+      // replace to remove this screen from the stack and go to login
+      router.replace("/auth/login");
+      return true; // handled
+    };
+
+    const backSub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+
+    return () => {
+      mounted = false;
+      // BackHandler.addEventListener returns a subscription with .remove()
+      try {
+        backSub.remove();
+      } catch (e) {
+        // ignore if remove is not available
+      }
+    };
+  }, [params.from]);
 
   return (
     <View style={styles.container}>

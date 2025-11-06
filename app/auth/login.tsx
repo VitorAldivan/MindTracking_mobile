@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -14,38 +15,53 @@ export default function LoginScreen() {
   const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email || !senha) {
-      Alert.alert("Erro", "Por favor, preencha email e senha.");
+const handleLogin = async () => {
+  if (!email || !senha) {
+    Alert.alert("Erro", "Por favor, preencha email e senha.");
+    return;
+  }
+  setLoading(true);
+  try {
+    const response = await loginService(email, senha);
+
+    if (!response.success) {
+      Alert.alert("Erro", response.message || "Erro ao fazer login");
       return;
     }
-    setLoading(true);
-    try {
-      await loginService(email, senha);
-      router.push("/(tabs)/home");
-    } catch (error: any) {
-      const msg = error?.message || String(error);
-      console.log(msg);
 
-      // detect common "not verified" messages (pt/en) and server phrases like
-      // "Por favor, verifique seu e-mail antes de fazer login" or
-      // "Um novo código de verificação foi enviado para seu e-mail"
-      const normalized = String(msg || "").toLowerCase();
-      const isNotVerified = /na[oã]o\s+verif|nao\s+verif|na[oã]o\s+verificado|nao\s+verificado|not\s+verified|unverified|conta\s+na[oã]o\s+verificada|account\s+not\s+verified|user\s+not\s+verified|por\s+favor.*verif|verifique.*e-?mail|verifica[çc][ãa]o|codigo\s+de\s+verifica|novo\s+codigo|please.*verify|verify\s+your|check\s+your\s+email/i.test(
-        normalized
-      );
-
-      if (isNotVerified) {
-        // redirect user to the confirmation screen so they can verify their account
-        router.push({ pathname: "/auth/confirm-code", params: { email, from: "register" } });
-        return;
-      }
-
-      Alert.alert("Erro", msg || "Erro ao fazer login");
-    } finally {
-      setLoading(false);
+    if (response.user && response.user.id) {
+      await AsyncStorage.setItem("usuario_id", String(response.user.id));
     }
-  };
+
+    if (!response.user.email_verificado) {
+      router.push({ pathname: "/auth/confirm-code", params: { email } });
+      return;
+    }
+    if (!response.user.questionario_inicial) {
+      router.push("/auth/questionario");
+      return;
+    }
+
+    router.push("/(tabs)/home");
+ } catch (error: any) {
+  console.log("Erro no login:", error);
+
+  const msg = error?.message || String(error);
+  const normalized = msg.toLowerCase();
+
+  // Regex aprimorada para capturar somente erros claros de usuário não verificado
+  const isNotVerified = /conta (não|nao) verificada|user not verified|email not verified|novo código de verificação/i.test(normalized);
+
+  if (isNotVerified) {
+    router.push({ pathname: "/auth/confirm-code", params: { email } });
+  } else {
+    // Para todos os outros erros, mostrar alerta e permanecer na tela de login
+    Alert.alert("Erro", msg || "Erro ao fazer login");
+  }
+} finally {
+    setLoading(false);
+  }
+};
 
   return (
     <View style={styles.container}>

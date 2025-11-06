@@ -5,129 +5,122 @@ import {
   Alert,
   Dimensions,
   Image,
+  Modal,
   Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { recoverPassword } from "../../service/passwordService";
 import CardDenominado from "../components/cards/cardPerfil";
+import ButtonBase from "../components/common/button/button";
+import ButtonBase2 from "../components/common/button/button2";
 
 const { width, height } = Dimensions.get("window");
-const AVATAR_SIZE = width * 0.442; // Responsivo, igual ao seu avatar
-const EDIT_SIZE = AVATAR_SIZE * 0.24; // Proporcional ao avatar
-
-// Helper: search object (possibly nested) for first matching key from candidates
-function findFirstMatch(obj: any, candidates: string[]): any {
-  if (!obj || typeof obj !== 'object') return null;
-  for (const k of candidates) {
-    if (Object.prototype.hasOwnProperty.call(obj, k) && obj[k]) return obj[k];
-  }
-  // deep search
-  for (const key of Object.keys(obj)) {
-    try {
-      const val = obj[key];
-      if (val && typeof val === 'object') {
-        const found = findFirstMatch(val, candidates);
-        if (found) return found;
-      }
-    } catch (e) {
-      // ignore
-    }
-  }
-  return null;
-}
+const AVATAR_SIZE = width * 0.442;
+const EDIT_SIZE = AVATAR_SIZE * 0.24;
 
 export default function Perfil() {
   const router = useRouter();
+  const [showLogoutModal, setShowLogoutModal] = React.useState(false);
   const [email, setEmail] = useState<string | null>(null);
   const [nome, setNome] = useState<string | null>(null);
   const [foto, setFoto] = useState<string | null>(null);
   const [numero, setNumero] = useState<string | null>(null);
   const [genero, setGenero] = useState<string | null>(null);
-  // Re-run profile load every time the screen is focused so updates are reflected
+
   useFocusEffect(
     useCallback(() => {
       let mounted = true;
 
       async function loadProfilePreferLocal() {
         try {
-          // Prefer token as source of truth for user info
-          const token = await AsyncStorage.getItem('token');
+          const token = await AsyncStorage.getItem("token");
           if (token) {
             try {
-              const parts = token.split('.');
+              const parts = token.split(".");
               if (parts.length >= 2) {
-                const payloadB64 = parts[1];
-                const padded = payloadB64.replace(/-/g, '+').replace(/_/g, '/');
-                // pad base64
-                const pad = padded.length % 4;
-                const withPad = pad === 0 ? padded : padded + '='.repeat(4 - pad);
-                let json: string | null = null;
+                const payloadB64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+                const pad = payloadB64.length % 4;
+                const withPad = pad === 0 ? payloadB64 : payloadB64 + "=".repeat(4 - pad);
                 const atobFn = (global as any).atob || (globalThis as any).atob;
-                if (typeof atobFn === 'function') {
-                  const decoded = atobFn(withPad);
-                  try {
-                    json = decodeURIComponent(
-                      Array.prototype.map
-                        .call(decoded, function (c: string) {
-                          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                        })
-                        .join('')
-                    );
-                  } catch (e) {
-                    json = decoded;
-                  }
-                } else if (typeof (global as any).Buffer !== 'undefined') {
-                  json = (global as any).Buffer.from(withPad, 'base64').toString('utf8');
+                let decoded = "";
+                if (typeof atobFn === "function") decoded = atobFn(withPad);
+                else if (typeof (global as any).Buffer !== "undefined")
+                  decoded = (global as any).Buffer.from(withPad, "base64").toString("utf8");
+                let parsed: any = null;
+                try {
+                  parsed = JSON.parse(decoded);
+                } catch {
+                  parsed = decoded;
                 }
 
-                if (json) {
-                  try {
-                    const parsed = JSON.parse(json);
-
-                    // robust lookup across many possible key names and nested objects
-                    const nameCandidates = ['nome', 'name', 'fullName', 'full_name', 'username', 'usuario', 'user', 'given_name'];
-                    const emailCandidates = ['email', 'mail', 'usuario_email'];
-                    const phoneCandidates = ['numero', 'phone', 'phone_number', 'celular', 'telefone'];
-                    const genderCandidates = ['genero', 'gender', 'sexo'];
-
-                    const serverNome = findFirstMatch(parsed, nameCandidates) ?? null;
-                    const serverEmail = findFirstMatch(parsed, emailCandidates) ?? null;
-                    const serverNumero = findFirstMatch(parsed, phoneCandidates) ?? null;
-                    const serverGenero = findFirstMatch(parsed, genderCandidates) ?? null;
-
-                    if (mounted) {
-                      if (serverNome) setNome(String(serverNome));
-                      if (serverEmail) setEmail(String(serverEmail));
-                      if (serverNumero) setNumero(String(serverNumero));
-                      if (serverGenero) setGenero(String(serverGenero));
-                    }
-
-                    // still load photo from AsyncStorage if present
-                    const f = await AsyncStorage.getItem('foto');
-                    if (mounted && f) setFoto(f);
-                    // persist these values locally for other flows if desired
+                const findFirstMatch = (obj: any, candidates: string[]): any => {
+                  if (!obj || typeof obj !== "object") return null;
+                  for (const k of candidates) {
+                    if (Object.prototype.hasOwnProperty.call(obj, k) && obj[k]) return obj[k];
+                  }
+                  for (const key of Object.keys(obj)) {
                     try {
-                      if (serverNome) await AsyncStorage.setItem('nome', String(serverNome));
-                      if (serverEmail) await AsyncStorage.setItem('email', String(serverEmail));
-                    } catch (e) {
-                      // ignore
-                    }
-                  } catch (e) {
-                    // ignore parse error
+                      const val = obj[key];
+                      if (val && typeof val === "object") {
+                        const found = findFirstMatch(val, candidates);
+                        if (found) return found;
+                      }
+                    } catch {}
                   }
+                  return null;
+                };
+
+                const nameCandidates = [
+                  "nome",
+                  "name",
+                  "fullName",
+                  "full_name",
+                  "username",
+                  "usuario",
+                  "user",
+                  "given_name",
+                ];
+                const emailCandidates = ["email", "mail", "usuario_email"];
+                const phoneCandidates = ["numero", "phone", "phone_number", "celular", "telefone"];
+                const genderCandidates = ["genero", "gender", "sexo"];
+                const photoCandidates = ["foto", "foto_perfil_url", "profile_picture"];
+
+                const serverNome = findFirstMatch(parsed, nameCandidates) ?? null;
+                const serverEmail = findFirstMatch(parsed, emailCandidates) ?? null;
+                const serverNumero = findFirstMatch(parsed, phoneCandidates) ?? null;
+                const serverGenero = findFirstMatch(parsed, genderCandidates) ?? null;
+                const serverFoto = findFirstMatch(parsed, photoCandidates) ?? null;
+
+                const nomeLocal = await AsyncStorage.getItem("nome");
+                const emailLocal = await AsyncStorage.getItem("email");
+                const fotoLocal = await AsyncStorage.getItem("foto");
+
+                if (mounted) {
+                  setNome(serverNome ?? nomeLocal ?? "");
+                  if (serverEmail) setEmail(String(serverEmail));
+                  else if (emailLocal) setEmail(emailLocal);
+                  if (serverNumero) setNumero(String(serverNumero));
+                  if (serverGenero) setGenero(String(serverGenero));
+                  if (serverFoto) setFoto(String(serverFoto));
+                  else if (fotoLocal) setFoto(fotoLocal);
                 }
+
+                try {
+                  if (serverNome) await AsyncStorage.setItem("nome", String(serverNome));
+                  if (serverEmail) await AsyncStorage.setItem("email", String(serverEmail));
+                  if (serverFoto) await AsyncStorage.setItem("foto", String(serverFoto));
+                } catch {}
               }
-            } catch (e) {
-              // ignore
-            }
+            } catch {}
           } else {
-            // No token: fall back to local storage for name/email/foto
+            // No token fallback to local storage
             const [n, e, f] = await Promise.all([
-              AsyncStorage.getItem('nome'),
-              AsyncStorage.getItem('email'),
-              AsyncStorage.getItem('foto'),
+              AsyncStorage.getItem("nome"),
+              AsyncStorage.getItem("email"),
+              AsyncStorage.getItem("foto"),
             ]);
             if (mounted) {
               if (n) setNome(n);
@@ -135,9 +128,7 @@ export default function Perfil() {
               if (f) setFoto(f);
             }
           }
-        } catch (err) {
-          // ignore
-        }
+        } catch {}
       }
 
       loadProfilePreferLocal();
@@ -151,11 +142,8 @@ export default function Perfil() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('/(tabs)/home')}>
-          <Image
-            source={require("../../assets/icons/seta.png")}
-            style={styles.seta}
-          />
+        <TouchableOpacity onPress={() => router.push("/(tabs)/home")}>
+          <Image source={require("../../assets/icons/seta.png")} style={styles.seta} />
         </TouchableOpacity>
         <View style={styles.textContainer}>
           <Text style={styles.perfilText}>Perfil</Text>
@@ -165,88 +153,135 @@ export default function Perfil() {
       <View style={styles.topo}>
         <View style={styles.avatarWrapper}>
           <Image
-            source={{ uri: foto ?? "https://i.pravatar.cc/100" }}
+            source={foto ? { uri: foto } : undefined}
             style={styles.avatar}
           />
-          <Pressable
-            style={styles.editButton}
-            onPress={() => router.push("/(tabs)/alterarfoto")}
-          >
+          <Pressable style={styles.editButton} onPress={() => router.push("/(tabs)/alterarfoto")}>
             <View style={styles.editCircle}>
-              <Image
-                source={require("@assets/icons/Edit.png")}
-                style={styles.editIcon}
-              />
+              <Image source={require("@assets/icons/Edit.png")} style={styles.editIcon} />
             </View>
           </Pressable>
         </View>
-  <Text style={styles.name}>{nome ?? ""}</Text>
-  <Text style={styles.email}>{email ?? ""}</Text>
+        <Text style={styles.name}>{nome ?? ""}</Text>
       </View>
 
       <View style={styles.cardsContainer}>
-        <CardDenominado tipo="progresso" onPress={() => router.push('/(tabs)/dashboard')} />
-  <CardDenominado tipo="alterarSenha" onPress={() => router.push({ pathname: '/auth/verify-code', params: { from: 'change' } })} />
-        <CardDenominado tipo="editarPerfil" onPress={() => router.push('/(tabs)/alterarfoto')} />
+        <CardDenominado tipo="progresso" onPress={() => router.push("/(tabs)/dashboard")} />
         <CardDenominado
-          tipo="sairDaConta"
+          tipo="alterarSenha"
           onPress={async () => {
-            await AsyncStorage.removeItem("token");
             try {
-              await AsyncStorage.removeItem("email");
-              await AsyncStorage.removeItem("nome");
-            } catch (e) {
-              // ignore
+              const email = await AsyncStorage.getItem("email");
+              if (!email) {
+                Alert.alert("Erro", "Email não encontrado. Faça login novamente.");
+                router.replace("/auth/login");
+                return;
+              }
+              const resp = await recoverPassword(email);
+              if (resp && resp.success) {
+                router.push({ pathname: "/auth/confirm-code", params: { email, from: "recover" } });
+              } else {
+                Alert.alert("Erro", resp?.message || "Email não identificado");
+              }
+            } catch (err: any) {
+              Alert.alert("Erro", err?.message || "Erro ao enviar código");
             }
-            router.replace("/auth/login");
           }}
         />
+        <CardDenominado tipo="editarPerfil" onPress={() => router.push("/(tabs)/editarperfil")} />
+        <CardDenominado tipo="sairDaConta" onPress={() => setShowLogoutModal(true)} />
       </View>
 
-      {/* Debug button to inspect token and storage for troubleshooting */}
       <View style={{ paddingHorizontal: width * 0.07, marginTop: 16 }}>
         <TouchableOpacity
           style={styles.debugBtn}
           onPress={async () => {
             try {
-              const token = await AsyncStorage.getItem('token');
-              const nomeStored = await AsyncStorage.getItem('nome');
-              const emailStored = await AsyncStorage.getItem('email');
-              const fotoStored = await AsyncStorage.getItem('foto');
-              const usuarioId = await AsyncStorage.getItem('usuario_id');
+              const token = await AsyncStorage.getItem("token");
+              const nomeStored = await AsyncStorage.getItem("nome");
+              const emailStored = await AsyncStorage.getItem("email");
+              const fotoStored = await AsyncStorage.getItem("foto");
+              const usuarioId = await AsyncStorage.getItem("usuario_id");
               let parsed: any = null;
               if (token) {
                 try {
-                  const parts = token.split('.');
+                  const parts = token.split(".");
                   if (parts.length >= 2) {
-                    const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+                    const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
                     const pad = b64.length % 4;
-                    const withPad = pad === 0 ? b64 : b64 + '='.repeat(4 - pad);
+                    const withPad = pad === 0 ? b64 : b64 + "=".repeat(4 - pad);
                     const atobFn = (global as any).atob || (globalThis as any).atob;
-                    let decoded = '';
-                    if (typeof atobFn === 'function') decoded = atobFn(withPad);
-                    else if (typeof (global as any).Buffer !== 'undefined') decoded = (global as any).Buffer.from(withPad, 'base64').toString('utf8');
-                    try { parsed = JSON.parse(decoded); } catch (e) { parsed = decoded; }
+                    let decoded = "";
+                    if (typeof atobFn === "function") decoded = atobFn(withPad);
+                    else if (typeof (global as any).Buffer !== "undefined")
+                      decoded = (global as any).Buffer.from(withPad, "base64").toString("utf8");
+                    try {
+                      parsed = JSON.parse(decoded);
+                    } catch {
+                      parsed = decoded;
+                    }
                   }
-                } catch (e) {
-                  // ignore
-                }
+                } catch {}
               }
 
-              console.log('PROFILE DEBUG -> token:', token, 'parsed:', parsed, 'nomeStored:', nomeStored, 'emailStored:', emailStored, 'fotoStored:', fotoStored, 'usuarioId:', usuarioId);
-              Alert.alert('Profile Debug', JSON.stringify({ token: !!token, parsed, nomeStored, emailStored, fotoStored, usuarioId }, null, 2));
+              Alert.alert(
+                "Profile Debug",
+                JSON.stringify(
+                  { token: !!token, parsed, nomeStored, emailStored, fotoStored, usuarioId },
+                  null,
+                  2
+                )
+              );
             } catch (err) {
-              console.log('Debug error', err);
-              Alert.alert('Erro', String(err));
+              Alert.alert("Erro", String(err));
             }
           }}
         >
           <Text style={styles.debugText}>Debug Profile</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={showLogoutModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLogoutModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Sair da conta</Text>
+            <Text style={styles.modalSubtitle}>
+              Tem certeza que deseja sair da sua conta?
+            </Text>
+
+            <View style={{ marginTop: 8 }} />
+
+            <ButtonBase2 title="Não" onPress={() => setShowLogoutModal(false)} />
+            <ButtonBase
+              title="Sim"
+              onPress={async () => {
+                try {
+                  await AsyncStorage.removeItem("token");
+                  try {
+                    await AsyncStorage.removeItem("email");
+                    await AsyncStorage.removeItem("nome");
+                    await AsyncStorage.removeItem("foto");
+                  } catch {}
+                  setShowLogoutModal(false);
+                  router.replace("/auth/login");
+                } catch (err: any) {
+                  Alert.alert("Erro", err?.message || "Erro ao sair da conta");
+                  setShowLogoutModal(false);
+                }
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -287,7 +322,7 @@ const styles = StyleSheet.create({
   avatarWrapper: {
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
-    position: "relative", // Permite posicionamento absoluto do botão
+    position: "relative",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -300,8 +335,8 @@ const styles = StyleSheet.create({
   },
   editButton: {
     position: "absolute",
-    right: width * 0.009, // Sempre no canto direito da foto
-    bottom: 0, // Sempre embaixo da foto
+    right: width * 0.009,
+    bottom: 0,
   },
   editCircle: {
     width: EDIT_SIZE,
@@ -331,13 +366,46 @@ const styles = StyleSheet.create({
     marginTop: width * 0.01,
   },
   debugBtn: {
-    backgroundColor: '#374151',
+    backgroundColor: "#374151",
     paddingVertical: 10,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   debugText: {
-    color: '#fff',
-    fontFamily: 'Inter_600SemiBold',
+    color: "#fff",
+    fontFamily: "Inter_600SemiBold",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: width * 0.02,
+  },
+  modalContent: {
+    backgroundColor: "#1E293B",
+    borderRadius: 16,
+    padding: height * 0.03,
+    paddingTop: height * 0.04,
+    width: "90%",
+    
+  },
+  modalTitle: {
+    fontSize: width * 0.05,
+    fontFamily: "Inter_700Bold",
+    color: "#fff",
+    marginBottom: height * 0.025,
+    flexShrink: 1,
+    alignContent: "center",
+    textAlign: "center",
+  },
+  modalSubtitle: {
+    textAlign: "center",
+    fontSize: width * 0.042,
+    fontFamily: "Inter_500Medium",
+    color: "#fff",
+    marginBottom: height * 0.03,
+    lineHeight: height * 0.028,
+    flexShrink: 1,
   },
 });

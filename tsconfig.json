@@ -6,18 +6,24 @@
     "module": "Node16",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-  "moduleResolution": "node16",
+    "moduleResolution": "node16",
     "skipLibCheck": true,
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     }
   },
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "app",
+    "expo-env.d.ts",
+    ".expo/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "components",
+    "@types",
+    "assets",
+    "scripts",
+    "babel.config.js",
+    "metro.config.js"
   ]
 }

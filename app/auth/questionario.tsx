@@ -11,31 +11,93 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { fetchQuestions as fetchQuestionsService, submitAnswers as submitAnswersService } from "../../service/questionarioService";
+import {
+  fetchQuestions as fetchQuestionsService,
+  submitAnswers as submitAnswersService,
+} from "../../service/questionarioService";
 
 const { width, height } = Dimensions.get("window");
-const API_BASE_URL = "http://44.220.11.145";
+
+// --- Função auxiliar: decodifica JWT ---
+function decodeJwt(token: string) {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const payload = parts[1];
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+
+    let json: string | null = null;
+    const atobFn = (global as any).atob || (globalThis as any).atob;
+
+    if (typeof atobFn === "function") {
+      const decoded = atobFn(base64);
+      json = decodeURIComponent(
+        Array.prototype
+          .map.call(decoded, (c: string) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join("")
+      );
+    } else if (typeof (global as any).Buffer !== "undefined") {
+      json = (global as any).Buffer.from(base64, "base64").toString("utf8");
+    } else {
+      return null;
+    }
+
+    if (!json) return null;
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
 
 export default function Questionnaire() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const mode = String(params?.mode ?? "");
 
-  // no fallback: rely on backend for perguntas
-  const fallback: any[] = [];
-
-  const [questions, setQuestions] = useState<Array<any>>(fallback as any);
+  const [questions, setQuestions] = useState<Array<any>>([]);
   const [loading, setLoading] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selected, setSelected] = useState<Record<number, number>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [usuarioId, setUsuarioId] = useState<string | null>(null);
 
-  // animação da barra
-  const progressAnim = useRef(new Animated.Value(0)).current!;
-  // Animated.View sometimes confuses TS JSX types in this workspace; create a safe any alias
+  const progressAnim = useRef(new Animated.Value(0)).current;
   const AnimatedView: any = Animated.View;
 
-  // animate progress when index or questions length change; progress = answeredCount / total
+  // --- Recupera o ID do usuário autenticado ---
+  useEffect(() => {
+    const idFromParams = String(params?.usuario_id || "");
+    if (idFromParams) {
+      setUsuarioId(idFromParams);
+      AsyncStorage.setItem("usuario_id", idFromParams); // garante persistência
+    } else {
+      // Fallback para AsyncStorage e token JWT já implementado abaixo
+      async function getUserId() {
+        try {
+          let storedId = await AsyncStorage.getItem("usuario_id");
+          if (storedId) {
+            setUsuarioId(storedId);
+            return;
+          }
+          const token = await AsyncStorage.getItem("token");
+          if (token) {
+            const payload = decodeJwt(token);
+            const id = payload?.id || payload?.user?.id || null;
+            if (id) {
+              storedId = String(id);
+              await AsyncStorage.setItem("usuario_id", storedId);
+              setUsuarioId(storedId);
+            }
+          }
+        } catch (e) {
+          console.log("Erro ao recuperar usuario_id:", e);
+        }
+      }
+      getUserId();
+    }
+  }, [params?.usuario_id]);
+
+  // --- Atualiza barra de progresso ---
   useEffect(() => {
     const total = questions.length;
     const newProgress = total === 0 ? 0 : (currentQuestionIndex / total) * 100;
@@ -47,45 +109,41 @@ export default function Questionnaire() {
     }).start();
   }, [currentQuestionIndex, questions.length, progressAnim]);
 
-  // fetch questions from backend
+  // --- Busca perguntas do backend ---
   useEffect(() => {
     let mounted = true;
     async function loadQuestions() {
       setLoading(true);
       try {
         const token = await AsyncStorage.getItem("token");
-        // Only force-login for protected flows (e.g. daily questionnaire).
-        // Allow the initial onboarding questionnaire to be taken without auth.
         if (!token && mode === "diario") {
-          console.log("Token não fornecido para modo diario - redirecionando para login");
+          console.log("Token não encontrado - redirecionando para login");
           if (mounted) setLoading(false);
-          try {
-            router.replace("/auth/login");
-          } catch (e) {
-            // ignore if router unavailable
-          }
+          router.replace("/auth/login");
           return;
         }
 
-        const modeParam = mode === "diario" ? "diario" : undefined;
-        const resp = await fetchQuestionsService(modeParam);
+        const resp = await fetchQuestionsService(mode === "diario" ? "diario" : undefined);
         if (mounted && resp) {
-          // API may return { success:true, perguntas: [...] } or an array directly
-          const raw = Array.isArray(resp) ? resp : (resp.perguntas ?? resp);
+          const raw = Array.isArray(resp) ? resp : resp.perguntas ?? [];
           if (Array.isArray(raw) && raw.length > 0) {
             setQuestions(
               raw.map((q: any, idx: number) => ({
                 id: Number(q.id ?? idx + 1),
-                text: String(q.text ?? q.texto ?? q.pergunta ?? q.question ?? ""),
+                text: String(q.text ?? q.texto ?? q.pergunta ?? ""),
                 alternativas: Array.isArray(q.alternativas)
-                  ? q.alternativas.map((a: any) => ({ id: Number(a.id), texto: a.texto ?? a.text ?? String(a), pontuacao: a.pontuacao ?? null }))
+                  ? q.alternativas.map((a: any) => ({
+                      id: Number(a.id),
+                      texto: a.texto ?? a.text ?? String(a),
+                      pontuacao: a.pontuacao ?? null,
+                    }))
                   : [],
               }))
             );
           }
         }
       } catch (e) {
-        console.log("Could not fetch questions, using fallback", (e as any)?.message ?? String(e));
+        console.log("Erro ao carregar perguntas:", e);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -97,6 +155,7 @@ export default function Questionnaire() {
     };
   }, [mode]);
 
+  // --- Avançar questão ---
   const handleNext = async () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex((c) => c + 1);
@@ -106,16 +165,15 @@ export default function Questionnaire() {
   };
 
   const handleBack = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex((c) => c - 1);
-    }
+    if (currentQuestionIndex > 0) setCurrentQuestionIndex((c) => c - 1);
   };
 
+  // --- Selecionar alternativa ---
   const handleSelect = async (alternativaId: number) => {
     const perguntaId = questions[currentQuestionIndex]?.id;
     if (!perguntaId) return;
     setSelected((s) => ({ ...s, [perguntaId]: alternativaId }));
-    // auto-advance
+
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex((c) => c + 1);
     } else {
@@ -123,140 +181,42 @@ export default function Questionnaire() {
     }
   };
 
+  // --- Envia respostas para o backend ---
   const submitAnswers = async () => {
     setSubmitting(true);
     try {
-      const token = await AsyncStorage.getItem("token");
       const respostas = questions
-        .map((q: any) => ({ pergunta_id: q.id, alternativa_id: selected[q.id] }))
-        .filter((r: any) => r.alternativa_id !== undefined && r.alternativa_id !== null);
+        .map((q: any) => ({
+          pergunta_id: q.id,
+          alternativa_id: selected[q.id],
+        }))
+        .filter((r) => r.alternativa_id !== undefined && r.alternativa_id !== null);
 
       const body: any = { respostas };
-      // ensure we send a valid usuario_id: first try AsyncStorage
-      let usuarioId = await AsyncStorage.getItem("usuario_id");
 
-      // helper: robust JWT decode + network lookup to obtain usuario_id and persist it
-      const base64Decode = (b64: string) => {
-        try {
-          // handle URL-safe base64
-          const padded = b64.replace(/-/g, '+').replace(/_/g, '/');
-          // add padding
-          const pad = padded.length % 4;
-          const withPad = pad === 0 ? padded : padded + '='.repeat(4 - pad);
-          if (typeof globalThis.atob === 'function') {
-            return globalThis.atob(withPad);
-          }
-          // React Native JS environment: use Buffer if available
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          if (typeof (globalThis as any).Buffer !== 'undefined') {
-            // @ts-ignore
-            return (globalThis as any).Buffer.from(withPad, 'base64').toString('utf8');
-          }
-          // last resort: try decoding via decodeURIComponent
-          const binary = atob(withPad);
-          return decodeURIComponent(escape(binary));
-        } catch (e) {
-          return null;
-        }
-      };
-
-      const decodeJwt = (tk?: string) => {
-        if (!tk) return null;
-        try {
-          const parts = tk.split('.');
-          if (parts.length < 2) return null;
-          const json = base64Decode(parts[1]);
-          if (!json) return null;
-          return JSON.parse(json);
-        } catch (e) {
-          return null;
-        }
-      };
-
-      const tryNetworkUser = async (tk?: string) => {
-        if (!tk) return null;
-        const candidates = [
-          "/auth/me",
-          "/usuario/me",
-          "/user/me",
-          "/users/me",
-          "/usuario",
-          "/user",
-        ];
-        // import api lazily to avoid top-level cycle
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const api = require("../../service/api").default;
-        for (const endpoint of candidates) {
-          try {
-            const res = await api.get(endpoint, { headers: { Authorization: `Bearer ${tk}` }, timeout: 5000 });
-            if (res?.data) return res.data;
-          } catch (_) {
-            // ignore and try next
-          }
-        }
-        return null;
-      };
-
-      // 1) AsyncStorage
-      // (usuarioId variable already set above from AsyncStorage getItem)
-
-      // 2) decode JWT token payload
-      if (!usuarioId && token) {
-        const decoded = decodeJwt(token);
-        if (decoded) {
-          usuarioId = String(decoded.id ?? decoded.user?.id ?? decoded.usuario_id ?? decoded.usuario?.id ?? decoded.sub ?? "");
-          if (usuarioId) {
-            await AsyncStorage.setItem('usuario_id', usuarioId);
-            console.log('Decoded usuario_id from token:', usuarioId);
-          }
-        }
-      }
-
-      // 3) network lookup (last resort)
-      if (!usuarioId && token) {
-        try {
-          const userData = await tryNetworkUser(token);
-          if (userData) {
-            usuarioId = String(userData.id ?? userData.user?.id ?? userData.usuario_id ?? userData.usuario?.id ?? userData.sub ?? "");
-            if (usuarioId) {
-              await AsyncStorage.setItem('usuario_id', usuarioId);
-              console.log('Fetched usuario_id from network:', usuarioId);
-            }
-          }
-        } catch (e) {
-          console.log('Network lookup for usuario_id failed', (e as any)?.message ?? e);
-        }
-      }
-
+      // adiciona usuario_id no corpo da requisição
       if (usuarioId) body.usuario_id = Number(usuarioId);
 
-  await submitAnswersService(body, mode);
+      await submitAnswersService(body, mode);
 
-      // on success
       await AsyncStorage.removeItem("questionario_pending");
-      // if this was the daily questionnaire, persist that it was completed today
-      try {
-        // sempre marcar o questionário como concluído — seja inicial ou diário
-const today = new Date().toISOString().slice(0, 10);
-await AsyncStorage.setItem("diario_last_done", today);
-await AsyncStorage.setItem("diario_show_modal", "true");
-
-      } catch (e) {
-        // ignore storage errors
-        console.log('Failed to persist diario flag', (e as any)?.message ?? e);
-      }
+      const today = new Date().toISOString().slice(0, 10);
+      await AsyncStorage.setItem("diario_last_done", today);
+      await AsyncStorage.setItem("diario_show_modal", "true");
 
       router.replace("/(tabs)/home");
-    } catch (err) {
-      console.log("Failed submit answers", (err as any)?.response ?? err);
-      // prefer backend message when available
-      const message = (err as any)?.response?.data?.message ?? (err as any)?.message ?? "Não foi possível enviar suas respostas. Tente novamente.";
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message ??
+        err?.message ??
+        "Não foi possível enviar suas respostas.";
       Alert.alert("Erro", String(message));
     } finally {
       setSubmitting(false);
     }
   };
 
+  // --- Renderiza barra de progresso ---
   const renderProgressBar = () => {
     const total = questions.length;
     const progress = total === 0 ? 0 : (currentQuestionIndex / total) * 100;
@@ -285,47 +245,41 @@ await AsyncStorage.setItem("diario_show_modal", "true");
     );
   };
 
-  // If there are no questions from the backend, show a simple message and a button
-  if (!loading && (!questions || questions.length === 0)) {
+  if (loading) {
     return (
-      <View style={styles.container}>
-        <View style={styles.backButtonWrapper}>
-          {currentQuestionIndex > 0 && (
-            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-              <Image source={require("../../assets/icons/seta.png")} style={styles.seta} />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        <View style={styles.middleWrapper}>
-          <Text style={[styles.questionText, { textAlign: "center" }]}>Nenhuma pergunta disponível no momento.</Text>
-        </View>
-
-        <View style={styles.optionContainer}>
-          <TouchableOpacity
-            style={styles.option}
-            onPress={async () => {
-              try {
-                await AsyncStorage.removeItem("questionario_pending");
-              } catch (e) {
-                /* ignore */
-              }
-              router.replace("/(tabs)/home");
-            }}
-          >
-            <Text style={styles.optionText}>Concluir</Text>
-          </TouchableOpacity>
-        </View>
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Carregando perguntas...</Text>
       </View>
     );
   }
+
+  if (!loading && (!questions || questions.length === 0)) {
+    return (
+      <View style={styles.container}>
+        <Text style={[styles.questionText, { textAlign: "center" }]}>
+          Nenhuma pergunta disponível no momento.
+        </Text>
+        <TouchableOpacity
+          style={styles.option}
+          onPress={() => router.replace("/(tabs)/home")}
+        >
+          <Text style={styles.optionText}>Concluir</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const currentQuestion = questions[currentQuestionIndex];
 
   return (
     <View style={styles.container}>
       <View style={styles.backButtonWrapper}>
         {currentQuestionIndex > 0 && (
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Image source={require("../../assets/icons/seta.png")} style={styles.seta} />
+            <Image
+              source={require("../../assets/icons/seta.png")}
+              style={styles.seta}
+            />
           </TouchableOpacity>
         )}
       </View>
@@ -335,37 +289,24 @@ await AsyncStorage.setItem("diario_show_modal", "true");
       <View style={styles.middleWrapper}>
         <View style={styles.questionWrapper}>
           <View style={styles.verticalLine} />
-          <Text style={styles.questionText}>{questions[currentQuestionIndex]?.text ?? ""}</Text>
+          <Text style={styles.questionText}>{currentQuestion?.text ?? ""}</Text>
         </View>
       </View>
 
       <View style={styles.optionContainer}>
-        {(() => {
-          const q = questions[currentQuestionIndex] ?? { alternativas: [] };
-          if (q.alternativas && q.alternativas.length > 0) {
-            return q.alternativas.map((alt: any) => {
-              const isSelected = selected[q.id] === alt.id;
-              return (
-                <TouchableOpacity
-                  key={String(alt.id)}
-                  style={[styles.option, isSelected ? styles.optionSelected : null]}
-                  onPress={() => handleSelect(alt.id)}
-                >
-                  <View style={[styles.radio, isSelected ? styles.radioSelected : null]} />
-                  <Text style={styles.optionText}>{alt.texto}</Text>
-                </TouchableOpacity>
-              );
-            });
-          }
-
-          // if question exists but has no alternativas: show a Next button
+        {currentQuestion?.alternativas?.map((alt: any) => {
+          const isSelected = selected[currentQuestion.id] === alt.id;
           return (
-            <TouchableOpacity key="next" style={styles.option} onPress={handleNext}>
-              <View style={styles.radio} />
-              <Text style={styles.optionText}>Próximo</Text>
+            <TouchableOpacity
+              key={String(alt.id)}
+              style={[styles.option, isSelected && styles.optionSelected]}
+              onPress={() => handleSelect(alt.id)}
+            >
+              <View style={[styles.radio, isSelected && styles.radioSelected]} />
+              <Text style={styles.optionText}>{alt.texto}</Text>
             </TouchableOpacity>
           );
-        })()}
+        })}
       </View>
     </View>
   );
@@ -378,8 +319,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: width * 0.07,
     paddingTop: height * 0.06,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#0F172A",
+  },
+  loadingText: {
+    fontSize: width * 0.05,
+    color: "#fff",
+    fontFamily: "Inter_600SemiBold",
+  },
   backButtonWrapper: {
-    height: height * 0.06, // espaço reservado fixo
+    height: height * 0.06,
     marginBottom: height * 0.02,
     justifyContent: "center",
   },
@@ -431,9 +383,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     marginRight: width * 0.03,
     borderRadius: 2,
-    alignSelf: "stretch",
-    marginTop: -14,
-    marginBottom: -14,
   },
   questionText: {
     flex: 1,
@@ -449,14 +398,11 @@ const styles = StyleSheet.create({
   },
   option: {
     flexDirection: "row",
-    // align to top so wrapped text expands downward
     alignItems: "flex-start",
     backgroundColor: "#29374F",
     borderRadius: 24,
     paddingVertical: height * 0.02,
     paddingHorizontal: width * 0.05,
-    minHeight: 48,
-    paddingRight: width * 0.04,
   },
   optionSelected: {
     backgroundColor: "#3357D6",
@@ -468,7 +414,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "white",
     marginRight: width * 0.04,
-    flexShrink: 0,
   },
   radioSelected: {
     backgroundColor: "#2E5BFF",
@@ -478,10 +423,7 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: width * 0.045,
     fontFamily: "Inter_500Medium",
-    // allow wrapping and ensure text stays within the card
     flex: 1,
     flexWrap: "wrap",
-    includeFontPadding: false,
-    marginRight: width * 0.02,
   },
 });

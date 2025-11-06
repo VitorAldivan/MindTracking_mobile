@@ -4,7 +4,7 @@ import Verification from "../components/common/input/inputCode";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { sendRecoveryCode, verifyCode } from "../../service/verifyService";
+import { sendRecoveryCode, verifyEmail } from "../../service/verifyService";
 import ButtonBase from "../components/common/button/button";
 
 const { width, height } = Dimensions.get("window");
@@ -30,22 +30,29 @@ export default function LoginScreen() {
     setError("");
     setLoading(true);
     try {
-      const resp = await verifyCode(email, codigo);
+      const resp = await verifyEmail(email, codigo);
       console.log("verify resp:", resp);
       if (resp && resp.success) {
-        if (resp.token) {
-          await AsyncStorage.setItem("token", String(resp.token));
-        }
-        const from = String(params.from || "register");
-        if (from === "register") {
-          router.push("/auth/welcome");
-        } else if (from === "recover") {
-          router.push({ pathname: "/auth/redefined2", params: { email: String(email), from: "recover" } });
-        } else if (from === "change") {
-          router.push({ pathname: "/auth/redefined2", params: { from: "change" } });
-        } else {
-          router.push("/auth/welcome");
-        }
+        if (resp && resp.success) {
+  if (resp.token) {
+    await AsyncStorage.setItem("token", String(resp.token));
+  }
+  // Redirecionamentos condicionais adicionais:
+  if (resp.user && resp.user.questionario_inicial === false) {
+    router.push("/auth/questionario");
+  } else {
+    const from = String(params.from || "register");
+    if (from === "register") {
+      router.push("/auth/welcome");
+    } else if (from === "recover") {
+      router.push({ pathname: "/auth/redefined2", params: { email: String(email), from: "recover" } });
+    } else if (from === "change") {
+      router.push({ pathname: "/auth/redefined2", params: { from: "change" } });
+    } else {
+      router.push("/auth/welcome");
+    }
+  }
+}
       } else {
         const msg = String(resp?.message || "");
         const from = String(params.from || "register");
